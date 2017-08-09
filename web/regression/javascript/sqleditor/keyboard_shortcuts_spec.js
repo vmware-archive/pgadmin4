@@ -8,15 +8,15 @@
 //////////////////////////////////////////////////////////////////////////
 
 import keyboardShortcuts from 'sources/sqleditor/keyboard_shortcuts';
-import {queryToolActions} from 'sources/sqleditor/query_tool_actions';
 
-describe('the keyboard shortcuts', () => {
-  const F1_KEY = 112,
-    F5_KEY = 116,
-    F7_KEY = 118,
-    F8_KEY = 119,
-    PERIOD_KEY = 190,
-    FWD_SLASH_KEY = 191;
+fdescribe('the keyboard shortcuts', () => {
+  const F1_KEY = 112;
+  const F5_KEY = 116;
+  const F7_KEY = 118;
+  const F8_KEY = 119;
+  const PERIOD_KEY = 190;
+  const FWD_SLASH_KEY = 191;
+  const F_KEY = 70;
 
   let sqlEditorControllerSpy, event, queryToolActionsSpy;
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe('the keyboard shortcuts', () => {
     ]);
 
     sqlEditorControllerSpy.gridView = gridView;
-    queryToolActionsSpy = jasmine.createSpyObj(queryToolActions, [
+    queryToolActionsSpy = jasmine.createSpyObj('queryToolActions', [
       'explainAnalyze',
       'explain',
       'download',
@@ -50,6 +50,7 @@ describe('the keyboard shortcuts', () => {
       'commentLineCode',
       'uncommentLineCode',
       'executeQuery',
+      'formatSql',
     ]);
   });
 
@@ -171,6 +172,72 @@ describe('the keyboard shortcuts', () => {
         keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
 
         expect(queryToolActionsSpy.download).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('formatSql (ctrl/cmd + shift + F)', () => {
+    describe('when there is not a query already running', () => {
+      describe('and the system is a Mac', () => {
+        beforeEach(() => {
+          macKeysSetup();
+          event.shiftKey = true;
+          event.which = F_KEY;
+          keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
+        });
+
+        it('should format the sql', () => {
+          expect(queryToolActionsSpy.formatSql)
+            .toHaveBeenCalledWith(sqlEditorControllerSpy, jasmine.any(Object));
+        });
+      });
+
+      describe('and the system is Windows', () => {
+        beforeEach(() => {
+          windowsKeysSetup();
+          event.shiftKey = true;
+          event.which = F_KEY;
+          keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
+        });
+
+        it('should format the sql', () => {
+          expect(queryToolActionsSpy.formatSql)
+            .toHaveBeenCalledWith(sqlEditorControllerSpy, jasmine.any(Object));
+        });
+      });
+    });
+
+    describe('when the query is already running', () => {
+      beforeEach(() => {
+        sqlEditorControllerSpy.isQueryRunning.and.returnValue(true);
+      });
+
+      describe('and the system is a Mac', () => {
+        beforeEach(() => {
+          macKeysSetup();
+          event.shiftKey = true;
+          event.which = F_KEY;
+        });
+
+        it('does nothing', () => {
+          keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
+
+          expect(queryToolActionsSpy.formatSql).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('and the system is a Windows', () => {
+        beforeEach(() => {
+          windowsKeysSetup();
+          event.shiftKey = true;
+          event.which = F_KEY;
+        });
+
+        it('does nothing', () => {
+          keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
+
+          expect(queryToolActionsSpy.formatSql).not.toHaveBeenCalled();
+        });
       });
     });
   });
@@ -363,7 +430,7 @@ describe('the keyboard shortcuts', () => {
   });
 
   function expectEventPropagationToStop() {
-    describe('stops all event propogation', () => {
+    describe('stops all event propagation', () => {
 
       it('should cancel the bubble', () => {
         expect(event.cancelBubble).toBe(true);

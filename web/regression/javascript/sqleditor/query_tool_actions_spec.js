@@ -8,8 +8,8 @@
 //////////////////////////////////////////////////////////////////////////
 import queryToolActions from 'sources/sqleditor/query_tool_actions';
 
-describe('queryToolActions', () => {
-  let sqlEditorController,
+fdescribe('queryToolActions', () => {
+  let sqlEditorControllerSpy,
     getSelectionSpy, getValueSpy,
     selectedQueryString, entireQueryString;
 
@@ -21,27 +21,27 @@ describe('queryToolActions', () => {
       });
 
       it('clears the html in the message tab', () => {
-        queryToolActions.executeQuery(sqlEditorController);
+        queryToolActions.executeQuery(sqlEditorControllerSpy);
 
         expect(queryToolActions._clearMessageTab).toHaveBeenCalled();
       });
 
-      it('calls the execute function on the sqlEditorController', () => {
-        queryToolActions.executeQuery(sqlEditorController);
+      it('calls the execute function on the sqlEditorControllerSpy', () => {
+        queryToolActions.executeQuery(sqlEditorControllerSpy);
 
-        expect(sqlEditorController.execute).toHaveBeenCalled();
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalled();
       });
     });
     describe('when the command is being run from the view data view', () => {
       beforeEach(() => {
         setUpSpies('', '');
-        sqlEditorController.is_query_tool = false;
+        sqlEditorControllerSpy.is_query_tool = false;
       });
 
-      it('it calls the execute_data_query function on the sqlEditorController', () => {
-        queryToolActions.executeQuery(sqlEditorController);
+      it('it calls the execute_data_query function on the sqlEditorControllerSpy', () => {
+        queryToolActions.executeQuery(sqlEditorControllerSpy);
 
-        expect(sqlEditorController.execute_data_query).toHaveBeenCalled();
+        expect(sqlEditorControllerSpy.execute_data_query).toHaveBeenCalled();
       });
 
     });
@@ -57,9 +57,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_timing').and.returnValue('OFF');
       });
       it('calls the execute function', () => {
-        queryToolActions.explainAnalyze(sqlEditorController);
+        queryToolActions.explainAnalyze(sqlEditorControllerSpy);
         let explainAnalyzeQuery = 'EXPLAIN (FORMAT JSON, ANALYZE ON, VERBOSE OFF, COSTS OFF, BUFFERS OFF, TIMING OFF) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
       });
     });
 
@@ -72,9 +72,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_timing').and.returnValue('ON');
       });
       it('calls the execute function', () => {
-        queryToolActions.explainAnalyze(sqlEditorController);
+        queryToolActions.explainAnalyze(sqlEditorControllerSpy);
         let explainAnalyzeQuery = 'EXPLAIN (FORMAT JSON, ANALYZE ON, VERBOSE ON, COSTS ON, BUFFERS ON, TIMING ON) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
       });
     });
 
@@ -87,9 +87,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_timing').and.returnValue('OFF');
       });
       it('calls the execute function', () => {
-        queryToolActions.explainAnalyze(sqlEditorController);
+        queryToolActions.explainAnalyze(sqlEditorControllerSpy);
         let explainAnalyzeQuery = 'EXPLAIN (FORMAT JSON, ANALYZE ON, VERBOSE ON, COSTS OFF, BUFFERS ON, TIMING OFF) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
       });
     });
 
@@ -102,9 +102,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_timing').and.returnValue('ON');
       });
       it('calls the execute function', () => {
-        queryToolActions.explainAnalyze(sqlEditorController);
+        queryToolActions.explainAnalyze(sqlEditorControllerSpy);
         let explainAnalyzeQuery = 'EXPLAIN (FORMAT JSON, ANALYZE ON, VERBOSE OFF, COSTS ON, BUFFERS OFF, TIMING ON) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainAnalyzeQuery);
       });
     });
   });
@@ -117,9 +117,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_costsEnabled').and.returnValue('ON');
       });
       it('calls the execute function', () => {
-        queryToolActions.explain(sqlEditorController);
+        queryToolActions.explain(sqlEditorControllerSpy);
         let explainQuery = 'EXPLAIN (FORMAT JSON, ANALYZE OFF, VERBOSE ON, COSTS ON, BUFFERS OFF, TIMING OFF) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainQuery);
       });
     });
 
@@ -130,9 +130,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_costsEnabled').and.returnValue('OFF');
       });
       it('calls the execute function', () => {
-        queryToolActions.explain(sqlEditorController);
+        queryToolActions.explain(sqlEditorControllerSpy);
         let explainQuery = 'EXPLAIN (FORMAT JSON, ANALYZE OFF, VERBOSE OFF, COSTS OFF, BUFFERS OFF, TIMING OFF) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainQuery);
       });
     });
 
@@ -143,9 +143,9 @@ describe('queryToolActions', () => {
         spyOn(queryToolActions, '_costsEnabled').and.returnValue('OFF');
       });
       it('calls the execute function', () => {
-        queryToolActions.explain(sqlEditorController);
+        queryToolActions.explain(sqlEditorControllerSpy);
         let explainQuery = 'EXPLAIN (FORMAT JSON, ANALYZE OFF, VERBOSE ON, COSTS OFF, BUFFERS OFF, TIMING OFF) ';
-        expect(sqlEditorController.execute).toHaveBeenCalledWith(explainQuery);
+        expect(sqlEditorControllerSpy.execute).toHaveBeenCalledWith(explainQuery);
       });
     });
   });
@@ -156,9 +156,9 @@ describe('queryToolActions', () => {
         setUpSpies('', '');
       });
       it('does nothing', () => {
-        queryToolActions.download(sqlEditorController);
+        queryToolActions.download(sqlEditorControllerSpy);
 
-        expect(sqlEditorController.trigger_csv_download).not.toHaveBeenCalled();
+        expect(sqlEditorControllerSpy.trigger_csv_download).not.toHaveBeenCalled();
       });
     });
 
@@ -182,9 +182,9 @@ describe('queryToolActions', () => {
         it('calls trigger_csv_download with the query and the filename', () => {
           let filename = 'data-' + time + '.csv';
 
-          queryToolActions.download(sqlEditorController);
+          queryToolActions.download(sqlEditorControllerSpy);
 
-          expect(sqlEditorController.trigger_csv_download).toHaveBeenCalledWith(selectedQueryString, filename);
+          expect(sqlEditorControllerSpy.trigger_csv_download).toHaveBeenCalledWith(selectedQueryString, filename);
         });
       });
 
@@ -208,9 +208,9 @@ describe('queryToolActions', () => {
         it('calls trigger_csv_download with the query and the filename', () => {
           let filename = 'data-' + time + '.csv';
 
-          queryToolActions.download(sqlEditorController);
+          queryToolActions.download(sqlEditorControllerSpy);
 
-          expect(sqlEditorController.trigger_csv_download).toHaveBeenCalledWith(entireQueryString, filename);
+          expect(sqlEditorControllerSpy.trigger_csv_download).toHaveBeenCalledWith(entireQueryString, filename);
         });
       });
     });
@@ -219,11 +219,11 @@ describe('queryToolActions', () => {
       it('calls trigger_csv_download with the sqlQuery and the table name', () => {
         let query = 'a very long query';
         setUpSpies('', query);
-        sqlEditorController.is_query_tool = false;
+        sqlEditorControllerSpy.is_query_tool = false;
 
-        queryToolActions.download(sqlEditorController);
+        queryToolActions.download(sqlEditorControllerSpy);
 
-        expect(sqlEditorController.trigger_csv_download).toHaveBeenCalledWith(query, 'iAmATable' + '.csv');
+        expect(sqlEditorControllerSpy.trigger_csv_download).toHaveBeenCalledWith(query, 'iAmATable' + '.csv');
       });
     });
 
@@ -235,9 +235,9 @@ describe('queryToolActions', () => {
         setUpSpies('', '');
       });
       it('does nothing', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentBlockCode(sqlEditorController);
+        queryToolActions.commentBlockCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.toggleComment).not.toHaveBeenCalled();
       });
@@ -247,15 +247,15 @@ describe('queryToolActions', () => {
       beforeEach(() => {
         setUpSpies('', 'a string\nddd\nsss');
 
-        sqlEditorController.gridView.query_tool_obj.getCursor = (isFrom) => {
+        sqlEditorControllerSpy.gridView.query_tool_obj.getCursor = (isFrom) => {
           return isFrom ? 3 : 3;
         };
       });
 
       it('comments the current line', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentBlockCode(sqlEditorController);
+        queryToolActions.commentBlockCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.toggleComment).toHaveBeenCalledWith(3, 3);
       });
@@ -267,9 +267,9 @@ describe('queryToolActions', () => {
       });
 
       it('comments the selection', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentBlockCode(sqlEditorController);
+        queryToolActions.commentBlockCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.toggleComment).toHaveBeenCalledWith(0, 12);
       });
@@ -282,9 +282,9 @@ describe('queryToolActions', () => {
         setUpSpies('', '');
       });
       it('does nothing', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentLineCode(sqlEditorController);
+        queryToolActions.commentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.lineComment).not.toHaveBeenCalled();
       });
@@ -294,15 +294,15 @@ describe('queryToolActions', () => {
       beforeEach(() => {
         setUpSpies('', 'a string\nddd\nsss');
 
-        sqlEditorController.gridView.query_tool_obj.getCursor = (isFrom) => {
+        sqlEditorControllerSpy.gridView.query_tool_obj.getCursor = (isFrom) => {
           return isFrom ? 3 : 3;
         };
       });
 
       it('comments the current line', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentLineCode(sqlEditorController);
+        queryToolActions.commentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.lineComment).toHaveBeenCalledWith(3, 3, {lineComment: '--'});
       });
@@ -314,9 +314,9 @@ describe('queryToolActions', () => {
       });
 
       it('comments the selection', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.commentLineCode(sqlEditorController);
+        queryToolActions.commentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.lineComment).toHaveBeenCalledWith(3, 12, {lineComment: '--'});
       });
@@ -329,9 +329,9 @@ describe('queryToolActions', () => {
         setUpSpies('', '');
       });
       it('does nothing', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.uncommentLineCode(sqlEditorController);
+        queryToolActions.uncommentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.uncomment).not.toHaveBeenCalled();
       });
@@ -341,15 +341,15 @@ describe('queryToolActions', () => {
       beforeEach(() => {
         setUpSpies('', 'a string\nddd\nsss');
 
-        sqlEditorController.gridView.query_tool_obj.getCursor = (isFrom) => {
+        sqlEditorControllerSpy.gridView.query_tool_obj.getCursor = (isFrom) => {
           return isFrom ? 3 : 3;
         };
       });
 
       it('uncomments the current line', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.uncommentLineCode(sqlEditorController);
+        queryToolActions.uncommentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.uncomment).toHaveBeenCalledWith(3, 3, {lineComment: '--'});
       });
@@ -361,27 +361,69 @@ describe('queryToolActions', () => {
       });
 
       it('uncomments the selection', () => {
-        let codeMirrorObj = sqlEditorController.gridView.query_tool_obj;
+        let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
 
-        queryToolActions.uncommentLineCode(sqlEditorController);
+        queryToolActions.uncommentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.uncomment).toHaveBeenCalledWith(3, 12, {lineComment: '--'});
       });
     });
   });
 
-  function setUpSpies(selectedQueryString, entireQueryString) {
-    getValueSpy = jasmine.createSpy('getValueSpy').and.returnValue(entireQueryString);
-    getSelectionSpy = jasmine.createSpy('getSelectionSpy').and.returnValue(selectedQueryString);
+  describe('formatSql', () => {
+    describe('when there is empty selection', () => {
+      beforeEach(() => {
+        setUpSpies('', 'a string\nddd\nsss');
 
-    sqlEditorController = {
+        sqlEditorControllerSpy.gridView.query_tool_obj.getCursor = (isFrom) => {
+          return isFrom ? 3 : 3;
+        };
+      });
+
+      it('formats the entire sql editor text', () => {
+        const sqlFormatterSpy = jasmine.createSpyObj('sqlFormatter', ['parse']);
+        sqlFormatterSpy.parse.and.returnValue('correctly FORMATTED SQL string');
+
+        queryToolActions.formatSql(sqlEditorControllerSpy, sqlFormatterSpy);
+
+        expect(sqlFormatterSpy.parse).toHaveBeenCalledWith('a string\nddd\nsss');
+        expect(sqlEditorControllerSpy.gridView.query_tool_obj.setValue)
+          .toHaveBeenCalledWith('correctly FORMATTED SQL string');
+      });
+    });
+
+    describe('when some part of the query is selected', () => {
+      beforeEach(() => {
+        setUpSpies('tring\nddd', 'a string\nddd\nsss');
+      });
+
+      it('formats the entire sql editor text', () => {
+        const sqlFormatterSpy = jasmine.createSpyObj('sqlFormatter', ['parse']);
+        sqlFormatterSpy.parse.and.returnValue('correctly FORMATTED SQL string');
+
+        queryToolActions.formatSql(sqlEditorControllerSpy, sqlFormatterSpy);
+
+        expect(sqlFormatterSpy.parse).toHaveBeenCalledWith('a string\nddd\nsss');
+        expect(sqlEditorControllerSpy.gridView.query_tool_obj.setValue)
+          .toHaveBeenCalledWith('correctly FORMATTED SQL string');
+      });
+    });
+  });
+
+
+  function setUpSpies(selectedQueryString, entireQueryString) {
+    getValueSpy = jasmine.createSpy('getValue').and.returnValue(entireQueryString);
+    getSelectionSpy = jasmine.createSpy('getSelection').and.returnValue(selectedQueryString);
+
+    sqlEditorControllerSpy = {
       gridView: {
         query_tool_obj: {
           getSelection: getSelectionSpy,
           getValue: getValueSpy,
-          toggleComment: jasmine.createSpy('toggleCommentSpy'),
-          lineComment: jasmine.createSpy('lineCommentSpy'),
-          uncomment: jasmine.createSpy('uncommentSpy'),
+          setValue: jasmine.createSpy('setValue'),
+          toggleComment: jasmine.createSpy('toggleComment'),
+          lineComment: jasmine.createSpy('lineComment'),
+          uncomment: jasmine.createSpy('uncomment'),
           getCursor: (isFrom) => {
             return entireQueryString.indexOf(selectedQueryString) + (isFrom ? 0 : selectedQueryString.length);
           },
@@ -393,6 +435,7 @@ describe('queryToolActions', () => {
       is_query_tool: true,
       execute: jasmine.createSpy('execute'),
       execute_data_query: jasmine.createSpy('execute_data_query'),
+      formatSql: jasmine.createSpy('formatSql'),
     };
   }
 });

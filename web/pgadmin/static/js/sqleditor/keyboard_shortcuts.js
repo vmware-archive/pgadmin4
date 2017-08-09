@@ -1,8 +1,11 @@
-const F5_KEY = 116,
-  F7_KEY = 118,
-  F8_KEY = 119,
-  PERIOD_KEY = 190,
-  FWD_SLASH_KEY = 191;
+import {sqlexer} from 'sqlexer';
+
+const F5_KEY = 116;
+const F7_KEY = 118;
+const F8_KEY = 119;
+const PERIOD_KEY = 190;
+const FWD_SLASH_KEY = 191;
+const F_KEY = 70;
 
 function keyboardShortcuts(sqlEditorController, queryToolActions, event) {
   if (sqlEditorController.isQueryRunning()) {
@@ -35,6 +38,9 @@ function keyboardShortcuts(sqlEditorController, queryToolActions, event) {
     keyCode === PERIOD_KEY) {
     _stopEventPropagation();
     queryToolActions.uncommentLineCode(sqlEditorController);
+  } else if (((this.isMac() && event.metaKey) || (!this.isMac() && event.ctrlKey)) &&
+    event.shiftKey && keyCode === F_KEY) {
+    queryToolActions.formatSql(sqlEditorController, sqlexer);
   }
 
   function _stopEventPropagation() {

@@ -22,7 +22,7 @@ let queryToolActions = {
   },
 
   executeQuery: function (sqlEditorController) {
-    if(sqlEditorController.is_query_tool) {
+    if (sqlEditorController.is_query_tool) {
       this._clearMessageTab();
       sqlEditorController.execute();
     } else {
@@ -93,6 +93,14 @@ let queryToolActions = {
       codeMirrorObj.getCursor(false),
       {lineComment: '--'}
     );
+  },
+
+  formatSql: function (sqlEditorController, sqlFormatter) {
+    let sqlQuery = sqlEditorController.gridView.query_tool_obj.getValue();
+    let result = sqlFormatter.parse(sqlQuery);
+    debugger;//eslint-disable-line
+    sqlEditorController.gridView.query_tool_obj.setValue(result);
+    //sqlEditorController.gridView.query_tool_obj.setValue(sqlFormatter.parse(sqlQuery));
   },
 };
 
