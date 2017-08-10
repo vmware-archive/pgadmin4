@@ -40,6 +40,7 @@ function keyboardShortcuts(sqlEditorController, queryToolActions, event) {
     queryToolActions.uncommentLineCode(sqlEditorController);
   } else if (((this.isMac() && event.metaKey) || (!this.isMac() && event.ctrlKey)) &&
     event.shiftKey && keyCode === F_KEY) {
+    _stopEventPropagation();
     queryToolActions.formatSql(sqlEditorController, sqlexer);
   }
 

@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////
 import queryToolActions from 'sources/sqleditor/query_tool_actions';
 
-fdescribe('queryToolActions', () => {
+describe('queryToolActions', () => {
   let sqlEditorControllerSpy,
     getSelectionSpy, getValueSpy,
     selectedQueryString, entireQueryString;
@@ -301,7 +301,6 @@ fdescribe('queryToolActions', () => {
 
       it('comments the current line', () => {
         let codeMirrorObj = sqlEditorControllerSpy.gridView.query_tool_obj;
-
         queryToolActions.commentLineCode(sqlEditorControllerSpy);
 
         expect(codeMirrorObj.lineComment).toHaveBeenCalledWith(3, 3, {lineComment: '--'});

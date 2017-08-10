@@ -9,7 +9,7 @@
 
 import keyboardShortcuts from 'sources/sqleditor/keyboard_shortcuts';
 
-fdescribe('the keyboard shortcuts', () => {
+describe('the keyboard shortcuts', () => {
   const F1_KEY = 112;
   const F5_KEY = 116;
   const F7_KEY = 118;
@@ -190,6 +190,7 @@ fdescribe('the keyboard shortcuts', () => {
           expect(queryToolActionsSpy.formatSql)
             .toHaveBeenCalledWith(sqlEditorControllerSpy, jasmine.any(Object));
         });
+        expectEventPropagationToStop();
       });
 
       describe('and the system is Windows', () => {
