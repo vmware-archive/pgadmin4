@@ -6462,9 +6462,9 @@ sprintf-js@^1.0.3, sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
 
-"sqlexer@git+https://github.com/greenplum-db/sqlexer":
-  version "0.0.1"
-  resolved "git+https://github.com/greenplum-db/sqlexer#08116b40533a1d995a69844d3a60b5a07de2d628"
+sqlexer@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/sqlexer/-/sqlexer-0.0.2.tgz#4098aacea8001f2e7c9caa1171624ba679366375"
   dependencies:
     antlr4 "^4.7.0"
 
