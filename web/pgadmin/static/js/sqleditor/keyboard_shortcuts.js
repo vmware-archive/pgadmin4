@@ -5,7 +5,7 @@ const F7_KEY = 118;
 const F8_KEY = 119;
 const PERIOD_KEY = 190;
 const FWD_SLASH_KEY = 191;
-const F_KEY = 70;
+const L_KEY = 76;
 
 function keyboardShortcuts(sqlEditorController, queryToolActions, event) {
   if (sqlEditorController.isQueryRunning()) {
@@ -39,7 +39,7 @@ function keyboardShortcuts(sqlEditorController, queryToolActions, event) {
     _stopEventPropagation();
     queryToolActions.uncommentLineCode(sqlEditorController);
   } else if (((this.isMac() && event.metaKey) || (!this.isMac() && event.ctrlKey)) &&
-    event.shiftKey && keyCode === F_KEY) {
+    event.altKey && keyCode === L_KEY) {
     _stopEventPropagation();
     queryToolActions.formatSql(sqlEditorController, sqlexer);
   }

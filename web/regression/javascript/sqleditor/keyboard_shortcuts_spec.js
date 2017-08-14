@@ -16,7 +16,7 @@ describe('the keyboard shortcuts', () => {
   const F8_KEY = 119;
   const PERIOD_KEY = 190;
   const FWD_SLASH_KEY = 191;
-  const F_KEY = 70;
+  const L_KEY = 76;
 
   let sqlEditorControllerSpy, event, queryToolActionsSpy;
   beforeEach(() => {
@@ -176,13 +176,13 @@ describe('the keyboard shortcuts', () => {
     });
   });
 
-  describe('formatSql (ctrl/cmd + shift + F)', () => {
+  describe('formatSql (ctrl/cmd + alt + L)', () => {
     describe('when there is not a query already running', () => {
       describe('and the system is a Mac', () => {
         beforeEach(() => {
           macKeysSetup();
-          event.shiftKey = true;
-          event.which = F_KEY;
+          event.altKey = true;
+          event.which = L_KEY;
           keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
         });
 
@@ -196,8 +196,8 @@ describe('the keyboard shortcuts', () => {
       describe('and the system is Windows', () => {
         beforeEach(() => {
           windowsKeysSetup();
-          event.shiftKey = true;
-          event.which = F_KEY;
+          event.altKey = true;
+          event.which = L_KEY;
           keyboardShortcuts.processEvent(sqlEditorControllerSpy, queryToolActionsSpy, event);
         });
 
@@ -216,8 +216,8 @@ describe('the keyboard shortcuts', () => {
       describe('and the system is a Mac', () => {
         beforeEach(() => {
           macKeysSetup();
-          event.shiftKey = true;
-          event.which = F_KEY;
+          event.altKey = true;
+          event.which = L_KEY;
         });
 
         it('does nothing', () => {
@@ -230,8 +230,8 @@ describe('the keyboard shortcuts', () => {
       describe('and the system is a Windows', () => {
         beforeEach(() => {
           windowsKeysSetup();
-          event.shiftKey = true;
-          event.which = F_KEY;
+          event.altKey = true;
+          event.which = L_KEY;
         });
 
         it('does nothing', () => {
