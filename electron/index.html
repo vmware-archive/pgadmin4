@@ -1,0 +1,35 @@
+<html>
+<body>
+
+<script>
+    function returnStatus(req, status) {
+        //console.log(req);
+        if (status == 200) {
+            window.location.href = "http://localhost:7894";
+        }
+        else {
+            console.log("The url returned status code " + status);
+            setTimeout(function () {
+                fetchStatus("http://localhost:7894");
+            }, 100)
+        }
+    }
+
+    function fetchStatus(address) {
+        var client = new XMLHttpRequest();
+        client.onreadystatechange = function () {
+            // in case of network errors this might not give reliable results
+            if (this.readyState == 4)
+                returnStatus(this, this.status);
+        }
+        client.open("HEAD", address);
+        client.send();
+    }
+
+    setTimeout(function () {
+        fetchStatus("http://localhost:7894");
+    }, 100)
+
+</script>
+</body>
+</html>
