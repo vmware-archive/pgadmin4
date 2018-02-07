@@ -1,0 +1,4 @@
+node.access.log
+node.error.log
+pgadmin4
+pgadmin4-*
