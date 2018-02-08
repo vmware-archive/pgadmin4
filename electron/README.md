@@ -1,21 +1,50 @@
-## copy application folder
+##Initial steps
+ - Create a venv environment that will be shipped with pgAdmin4
+ - Copy it to a folder called venv in the current folder
+
+_Caveat_: Because we ship the Python build we need to replace or create a better way to store the python venv folder
+for each type of OS
+
+### After this step the folder should look like:
+
+```
+electron
+ |
+ + - assets/
+ + - venv/
+ + - .gitignore
+ + - index.html
+ + - main.js
+ + - package.json
+ + - README.md
+ + - yarn.lock
+```
+
+### Install electron and dependencies
+`yarn install`
+
+### copy application folder
 `cp -r ../web pgadmin4`
 
-## Create the bundle files
-`cd pgadmin4 && yarn bundle`
+### Create the bundle files
+```cd pgadmin4 && yarn bundle```
 
-## Clean not needed files:
+I noticed some issues on this step so I run the yarn bundle on
+the `web` folder instead before copying over
+
+### Clean not needed files:
 ```
 rm -rf pgadmin4/node_modules
 find pgadmin4 | grep .pyc$ | xargs -I '{}' rm '{}'
-```
-
-## Other cleaning:
-```
 rm -rf pgadmin4/pgadmin/static/js/generated/.cache
 ```
 
-## Create the package
+### Run the application without packaging it for debug
+```
+./node_modules/.bin/electron .
+```
+
+### Create the package
 ```
 ./node_modules/.bin/electron-packager . --overwrite --ignore=".*\.zip" --ignore="pgAdmin4-darwin-x64" --icon=logo-256.icns
 ```
