@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "dragula": "^3.7.2",
-    "electron-remote": "^1.2.0",
     "electron-tabs": "^0.9.0"
   }
 }

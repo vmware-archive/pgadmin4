@@ -20,11 +20,19 @@ electron
  + - yarn.lock
 ```
 
+
 ### Install electron and dependencies
 `yarn install`
 
 ### copy application folder
 `cp -r ../web pgadmin4`
+
+### Remove the node_modules from the pgadmin folder and reinstall the dependencies
+```bash
+cd pgadmin4
+rm -rf node_modules
+yarn install
+```
 
 ### Create the bundle files
 ```cd pgadmin4 && yarn bundle```
@@ -46,5 +54,5 @@ rm -rf pgadmin4/pgadmin/static/js/generated/.cache
 
 ### Create the package
 ```
-./node_modules/.bin/electron-packager . --overwrite --ignore=".*\.zip" --ignore="pgAdmin4-darwin-x64" --icon=logo-256.icns
+/node_modules/.bin/electron-packager . --overwrite --ignore=".*\.zip" --ignore=".*\.log" --icon=assets/icons/mac/logo-256.png.hqx --package-manager=yarn
 ```

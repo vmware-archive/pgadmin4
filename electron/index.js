@@ -173,7 +173,7 @@ const createNewWindow = () => {
     protocol: 'file:',
     slashes: true
   }))
-  newWindow.webContents.openDevTools()
+  // newWindow.webContents.openDevTools()
 
   newWindow.on('closed', () => {
     newWindow = null

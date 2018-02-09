@@ -16,9 +16,9 @@ const tabInfo = {
         // Open dev tools for webview
         let webview = tab.webview;
         if (!!webview) {
-            webview.addEventListener('dom-ready', () => {
-                webview.openDevTools();
-            })
+            // webview.addEventListener('dom-ready', () => {
+            //     webview.openDevTools();
+            // })
         }
     }
 };
