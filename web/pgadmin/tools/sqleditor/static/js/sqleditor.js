@@ -1923,6 +1923,15 @@ define('tools.querytool', [
       ) {
         var self = this;
 
+        if(is_new_browser_tab) {
+          if(window.opener == null) {
+            require('pgadmin.browser');
+            window.opener = {
+              pgAdmin: window.pgAdmin,
+            };
+          }
+        }
+
         self.is_query_tool = is_query_tool;
         self.rows_affected = 0;
         self.marked_line_no = 0;
