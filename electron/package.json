@@ -2,7 +2,7 @@
   "name": "pgAdmin4",
   "version": "3.0.0",
   "description": "pgAdmin4 application",
-  "main": "main.js",
+  "main": "index.js",
   "scripts": {
     "start": "electron ."
   },
@@ -19,6 +19,8 @@
     "electron-packager": "^11.0.0"
   },
   "dependencies": {
-    "electron-remote": "^1.2.0"
+    "dragula": "^3.7.2",
+    "electron-remote": "^1.2.0",
+    "electron-tabs": "^0.9.0"
   }
 }
