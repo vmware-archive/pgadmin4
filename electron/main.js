@@ -14,12 +14,12 @@ const tabInfo = {
     active: true,
     ready: tab => {
         // Open dev tools for webview
-        let webview = tab.webview;
-        if (!!webview) {
-            // webview.addEventListener('dom-ready', () => {
-            //     webview.openDevTools();
-            // })
-        }
+        // let webview = tab.webview;
+        // if (!!webview) {
+        //     webview.addEventListener('dom-ready', () => {
+        //         webview.openDevTools();
+        //     })
+        // }
     }
 };
 

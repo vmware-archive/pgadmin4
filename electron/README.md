@@ -54,5 +54,5 @@ rm -rf pgadmin4/pgadmin/static/js/generated/.cache
 
 ### Create the package
 ```
-/node_modules/.bin/electron-packager . --overwrite --ignore=".*\.zip" --ignore=".*\.log" --icon=assets/icons/mac/logo-256.png.hqx --package-manager=yarn
+./node_modules/.bin/electron-packager . --overwrite --ignore=".*\.zip" --ignore=".*\.log" --icon=assets/icons/mac/logo-256.png.hqx --package-manager=yarn
 ```
