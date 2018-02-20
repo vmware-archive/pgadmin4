@@ -2,9 +2,13 @@
   "name": "pgAdmin4",
   "version": "3.0.0",
   "description": "pgAdmin4 application",
+  "homepage": "https://www.pgadmin.org",
   "main": "index.js",
   "scripts": {
-    "start": "electron ."
+    "start": "./node_modules/.bin/electron .",
+    "dist": "./node_modules/.bin/electron-builder",
+    "build": "cd pgadmin4 && yarn install && yarn bundle && rimraf node_modules",
+    "build1": "./node_modules/.bin/electron-packager . --overwrite --ignore=\".*\\.zip\" --ignore=\".*\\.log\" --icon=assets/icons/mac/logo-256.png.icns --package-manager=yarn"
   },
   "repository": "https://github.com/postgres/pgadmin4/",
   "keywords": [
@@ -12,14 +16,44 @@
     "PGAdmin4",
     "PGAdmin"
   ],
-  "author": "Pivotal",
-  "license": "MIT",
+  "author": "Pivotal pgAdmin4",
+  "license": "PostgreSQL",
   "devDependencies": {
     "electron": "^1.8.2",
-    "electron-packager": "^11.0.0"
+    "electron-builder": "^20.0.7",
+    "electron-packager": "^11.0.0",
+    "rimraf": "^2.6.2"
   },
   "dependencies": {
     "dragula": "^3.7.2",
-    "electron-tabs": "^0.9.0"
+    "electron-debug": "^1.5.0",
+    "electron-tabs": "^0.9.0",
+    "wait-on": "^2.1.0"
+  },
+  "files": [
+    "app/**",
+    "pgadmin4/**",
+    "venv/**",
+    "build/icon.*",
+    "assets/**"
+  ],
+  "build": {
+    "appId": "org.pgadmin",
+    "productName": "pgAdmin 4",
+    "copyright": "Copyright (C) 2013 - 2018, The pgAdmin Development Team",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icons/mac/pgAdmin4.icns",
+      "asar": false,
+      "compression": "maximum"
+    },
+    "win": {
+      "icon": "build/icons/win/pgAdmin4.ico",
+      "asar": false
+    },
+    "linux": {
+      "icon": "build/icons/png/pgAdmin4.png",
+      "asar": false
+    }
   }
 }

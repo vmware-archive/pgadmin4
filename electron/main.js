@@ -17,7 +17,7 @@ const tabInfo = {
         // let webview = tab.webview;
         // if (!!webview) {
         //     webview.addEventListener('dom-ready', () => {
-        //         webview.openDevTools();
+        //         webview.openDevTools({mode: 'detach'});
         //     })
         // }
     }
