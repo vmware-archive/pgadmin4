@@ -7,7 +7,11 @@
   "scripts": {
     "start": "./node_modules/.bin/electron .",
     "dist": "./node_modules/.bin/electron-builder",
-    "build": "cd pgadmin4 && yarn install && yarn bundle && rimraf node_modules",
+    "clean": "rimraf pgadmin4 dist pgAdmin4-*",
+    "bundle-app-js": "cd pgadmin4 && rimraf node_modules && yarn install && yarn bundle && rimraf node_modules pgadmin/static/js/generated/.cache",
+    "build": "yarn copy-folder && yarn copy-config && yarn bundle-app-js",
+    "copy-folder": "cp -r ../web pgadmin4 && find pgadmin4 | grep .pyc$ | xargs -I '{}' rm '{}'",
+    "copy-config": "cp config_local.py pgadmin4",
     "build1": "./node_modules/.bin/electron-packager . --overwrite --ignore=\".*\\.zip\" --ignore=\".*\\.log\" --icon=assets/icons/mac/logo-256.png.icns --package-manager=yarn"
   },
   "repository": "https://github.com/postgres/pgadmin4/",
