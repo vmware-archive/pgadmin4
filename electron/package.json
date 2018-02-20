@@ -43,16 +43,16 @@
     "copyright": "Copyright (C) 2013 - 2018, The pgAdmin Development Team",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "icon": "build/icons/mac/pgAdmin4.icns",
+      "icon": "assets/icons/mac/pgAdmin4.icns",
       "asar": false,
       "compression": "maximum"
     },
     "win": {
-      "icon": "build/icons/win/pgAdmin4.ico",
+      "icon": "assets/icons/win/pgAdmin4.ico",
       "asar": false
     },
     "linux": {
-      "icon": "build/icons/png/pgAdmin4.png",
+      "icon": "assets/icons/png/pgAdmin4.png",
       "asar": false
     }
   }
