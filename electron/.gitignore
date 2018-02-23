@@ -4,3 +4,4 @@ pgadmin4
 pgadmin4-*
 dist/*
 yarn*log
+venv
