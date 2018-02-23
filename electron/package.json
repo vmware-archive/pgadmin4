@@ -61,10 +61,16 @@
     "linux": {
       "icon": "assets/icons/png/pgAdmin4.png",
       "asar": false,
-      "target": {
-        "target": "rpm",
-        "arch": "x64"
-      }
+      "target": [
+        {
+          "target": "rpm",
+          "arch": "x64"
+        },
+        {
+          "target": "deb",
+          "arch": "x64"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
