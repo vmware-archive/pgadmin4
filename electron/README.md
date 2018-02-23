@@ -1,4 +1,4 @@
-##Initial steps
+## Initial steps
  - Create a venv environment that will be shipped with pgAdmin4
  - Copy it to a folder called venv in the current folder
 
@@ -20,6 +20,67 @@ electron
  + - yarn.lock
 ```
 
+## Packages generation
+
+### Pre requirements
+You should have installed Python, VirtualEnv, Node.js and Yarn.
+Also you should create a python environment using Python and VirtualEnv
+
+If `venv` folder exists remove it
+
+Inside electron folders do:
+```commandline
+python -m venv venv
+```
+
+This will create the venv folder.
+
+### Windows
+Unfortunately for windows we need to use a psycopg2 and pycrypto prebuild binaries this mean that we need 
+to installed them first and change `..\requirements.txt` to point to those versions.
+Only found versions for Python 3.4 so we need to install that
+
+#### Package generation steps
+Step 1 - Install python dependencies, inside the folder `electron`
+```commandline
+venv\Scripts\pip.exe install -r ..\requirements
+```
+
+Step 2 - Copy python source, copy configuration and create javascript bundle, inside the folder `electron`
+```commandline
+yarn build:windows
+```
+
+Step 3 - Remove package.json. Only needed in windows, due to some strange behavior of the electron-builder
+```commandline
+rm pgadmin4\package.json
+```
+
+Step 4 - Create package
+```commandline
+yarn dist
+```
+
+### Mac and Linux
+
+#### Package generation steps
+Step 1 - Install python dependencies, inside the folder `electron`
+```commandline
+venv/bin/pip install -r ../requirements
+```
+
+Step 2 - Copy python source, copy configuration and create javascript bundle, inside the folder `electron`
+```commandline
+yarn build:nix
+```
+
+Step 3 - Create package
+```commandline
+yarn dist
+```
+
+
+## Old instruction set
 
 ### Install electron and dependencies
 `yarn install`
