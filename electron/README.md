@@ -79,6 +79,20 @@ Step 3 - Create package
 yarn dist
 ```
 
+## Installation
+
+### Windows and Mac
+No special instructions, just follow the installer
+
+### Linux
+
+Need to install the following libraries:
+- /bin/sh
+- libXScrnSaver
+- libappindicator
+- libnotify
+- GLIBC == 2.25
+
 
 ## Old instruction set
 
