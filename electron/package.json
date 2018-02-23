@@ -23,7 +23,7 @@
     "PGAdmin4",
     "PGAdmin"
   ],
-  "author": "Pivotal pgAdmin4",
+  "author": "pgAdmin4 <pgadmin-support@pgadmin.org> (https://www.pgadmin.org)",
   "license": "PostgreSQL",
   "devDependencies": {
     "electron": "^1.8.2",
@@ -60,7 +60,11 @@
     },
     "linux": {
       "icon": "assets/icons/png/pgAdmin4.png",
-      "asar": false
+      "asar": false,
+      "target": {
+        "target": "rpm",
+        "arch": "x64"
+      }
     },
     "nsis": {
       "oneClick": false,
