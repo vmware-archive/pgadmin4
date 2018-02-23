@@ -42,6 +42,7 @@ pythonExecPath = path.join(__dirname, 'venv', 'bin', 'python');
 
 const getScriptPath = () => {
     if (process.platform === 'win32') {
+        pythonExecPath = path.join(__dirname, 'venv', 'Scripts', 'python');
         return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE);
     }
     return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE);

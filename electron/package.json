@@ -9,9 +9,12 @@
     "dist": "./node_modules/.bin/electron-builder",
     "clean": "rimraf pgadmin4 dist pgAdmin4-*",
     "bundle-app-js": "cd pgadmin4 && rimraf node_modules && yarn install && yarn bundle && rimraf node_modules pgadmin/static/js/generated/.cache",
-    "build": "yarn copy-folder && yarn copy-config && yarn bundle-app-js",
-    "copy-folder": "cp -r ../web pgadmin4 && find pgadmin4 | grep .pyc$ | xargs -I '{}' rm '{}'",
-    "copy-config": "cp config_local.py pgadmin4",
+    "build:windows": "yarn copy-folder:windows && yarn copy-config:windows && yarn bundle-app-js",
+    "build:nix": "yarn copy-folder:nix && yarn copy-config:nix && yarn bundle-app-js",
+    "copy-folder:nix": "cp -r ../web pgadmin4 && find pgadmin4 | grep .pyc$ | xargs -I '{}' rm '{}'",
+    "copy-config:nix": "cp config_local.py pgadmin4",
+    "copy-folder:windows": "copy -r ../web pgadmin4 && find pgadmin4 | grep .pyc$ | xargs -I '{}' rm '{}'",
+    "copy-config:windows": "copy config_local.py pgadmin4",
     "build1": "./node_modules/.bin/electron-packager . --overwrite --ignore=\".*\\.zip\" --ignore=\".*\\.log\" --icon=assets/icons/mac/logo-256.png.icns --package-manager=yarn"
   },
   "repository": "https://github.com/postgres/pgadmin4/",
@@ -58,6 +61,11 @@
     "linux": {
       "icon": "assets/icons/png/pgAdmin4.png",
       "asar": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icons/win/pgAdmin4.ico"
     }
   }
 }
