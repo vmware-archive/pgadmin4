@@ -88,7 +88,6 @@ define('pgadmin.node.column', [
 
   if (!pgBrowser.Nodes['column']) {
     pgBrowser.Nodes['column'] = pgBrowser.Node.extend({
-      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       parent_type: ['table', 'view', 'mview'],
       collection_type: ['coll-table', 'coll-view', 'coll-mview'],
       type: 'column',

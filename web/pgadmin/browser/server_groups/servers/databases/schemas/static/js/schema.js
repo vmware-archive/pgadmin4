@@ -450,29 +450,7 @@ define('pgadmin.node.schema', [
     });
 
     pgBrowser.tableChildTreeNodeHierarchy = function(i) {
-      var idx = 0,
-        res = {},
-        t = pgBrowser.tree;
-
-      do {
-        var d = t.itemData(i);
-        if (
-          d._type in pgBrowser.Nodes && pgBrowser.Nodes[d._type].hasId
-        ) {
-          if (d._type === 'partition' || d._type === 'table') {
-            if (!('table' in res)) {
-              res['table'] = _.extend({}, d, {'priority': idx});
-              idx -= 1;
-            }
-          } else {
-            res[d._type] = _.extend({}, d, {'priority': idx});
-            idx -= 1;
-          }
-        }
-        i = t.hasParent(i) ? t.parent(i) : null;
-      } while (i);
-
-      return res;
+      return this.getTreeNodeHierarchy(i);
     };
   }
 

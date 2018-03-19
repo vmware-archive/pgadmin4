@@ -13,7 +13,6 @@ define('pgadmin.node.index', [
         node: 'index',
         label: gettext('Indexes'),
         type: 'coll-index',
-        getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
         sqlAlterHelp: 'sql-alterindex.html',
         sqlCreateHelp: 'sql-createindex.html',
         dialogHelp: url_for('help.static', {'filename': 'index_dialog.html'}),
@@ -215,7 +214,6 @@ define('pgadmin.node.index', [
 
   if (!pgBrowser.Nodes['index']) {
     pgAdmin.Browser.Nodes['index'] = pgBrowser.Node.extend({
-      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       parent_type: ['table', 'view', 'mview', 'partition'],
       collection_type: ['coll-table', 'coll-view'],
       sqlAlterHelp: 'sql-alterindex.html',

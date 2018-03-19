@@ -26,7 +26,6 @@ define('pgadmin.node.table', [
 
   if (!pgBrowser.Nodes['table']) {
     pgBrowser.Nodes['table'] = pgBrowser.Node.extend({
-      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       type: 'table',
       label: gettext('Table'),
       collection_type: 'coll-table',

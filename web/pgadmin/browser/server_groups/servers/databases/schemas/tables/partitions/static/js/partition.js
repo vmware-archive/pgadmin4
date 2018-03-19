@@ -1,10 +1,12 @@
 define([
+  'sources/tree/pgadmin_tree_node',
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'sources/pgadmin', 'pgadmin.browser',
   'pgadmin.alertifyjs', 'pgadmin.backform', 'pgadmin.backgrid',
   'pgadmin.browser.collection', 'pgadmin.browser.table.partition.utils',
 ],
 function(
+  pgadminTreeNode,
   gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify, Backform, Backgrid
 ) {
 
@@ -13,7 +15,6 @@ function(
       pgAdmin.Browser.Collection.extend({
         node: 'partition',
         label: gettext('Partitions'),
-        getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
         type: 'coll-partition',
         columns: [
           'name', 'schema', 'partition_value', 'is_partitioned', 'description',
@@ -79,36 +80,6 @@ function(
           icon: 'fa fa-remove',
         },
         ]);
-      },
-      getTreeNodeHierarchy: function(i) {
-        var idx = 0,
-          res = {},
-          t = pgBrowser.tree;
-
-        do {
-          var d = t.itemData(i);
-          if (
-            d._type in pgBrowser.Nodes && pgBrowser.Nodes[d._type].hasId
-          ) {
-            if (d._type == 'partition' && 'partition' in res) {
-              if (!('table' in res)) {
-                res['table'] = _.extend({}, d, {'priority': idx});
-                idx -= 1;
-              }
-            } else if (d._type == 'table') {
-              if (!('table' in res)) {
-                res['table'] = _.extend({}, d, {'priority': idx});
-                idx -= 1;
-              }
-            } else {
-              res[d._type] = _.extend({}, d, {'priority': idx});
-              idx -= 1;
-            }
-          }
-          i = t.hasParent(i) ? t.parent(i) : null;
-        } while (i);
-
-        return res;
       },
       generate_url: function(item, type, d, with_id, info) {
         if (_.indexOf([
