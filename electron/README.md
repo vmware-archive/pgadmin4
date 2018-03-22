@@ -43,7 +43,7 @@ Only found versions for Python 3.4 so we need to install that
 #### Package generation steps
 Step 1 - Install python dependencies, inside the folder `electron`
 ```commandline
-venv\Scripts\pip.exe install -r ..\requirements
+venv\Scripts\pip.exe install -r ..\requirements.txt
 ```
 
 Step 2 - Copy python source, copy configuration and create javascript bundle, inside the folder `electron`
@@ -66,7 +66,7 @@ yarn dist
 #### Package generation steps
 Step 1 - Install python dependencies, inside the folder `electron`
 ```commandline
-venv/bin/pip install -r ../requirements
+venv/bin/pip install -r ../requirements.txt
 ```
 
 Step 2 - Copy python source, copy configuration and create javascript bundle, inside the folder `electron`
