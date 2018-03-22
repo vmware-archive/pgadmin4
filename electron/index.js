@@ -5,7 +5,7 @@ const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
 const waitOn = require('wait-on');
 
-const pythonApplicationUrl = 'localhost:7895';
+const pythonApplicationUrl = '127.0.0.1:7895';
 
 var waitForPythonProcessToStart = {
     resources: [
@@ -221,7 +221,7 @@ const createMainWindow = () => {
 
     globalShortcut.register('CommandOrControl+N', () => {
         console.log('CommandOrControl+N is pressed');
-        createNewWindow();
+        createNewWindow('http://' + pythonApplicationUrl);
     });
 };
 
@@ -270,8 +270,12 @@ const createNewWindow = (url) => {
     });
     newWindow.webContents.once('dom-ready', () => {
         newWindow.show();
-        loadingWindow.hide();
-        loadingWindow.close();
+        try {
+            loadingWindow.hide();
+            loadingWindow.close();
+        } catch (exp) {
+
+        }
     });
 
     activeWindow = newWindow;
@@ -282,7 +286,7 @@ const createNewWindow = (url) => {
 };
 
 ipcMain.on('ELECTRON_GUEST_WINDOW_MANAGER_WINDOW_OPEN', (event, url) => {
-    if (url.includes('localhost:7894')) {
+    if (url.includes('127.0.0.1:7894')) {
         createNewWindow(url)
     } else {
         shell.openExternal(url)
