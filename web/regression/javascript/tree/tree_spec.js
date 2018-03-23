@@ -8,14 +8,17 @@
 //////////////////////////////////////////////////////////////////////////
 
 import {Tree} from "../../../pgadmin/static/js/tree/tree";
+import {TreeFake} from "./tree_fake";
 
-describe('tree#', () => {
+const context = describe;
+
+const treeTests = (treeClass) => {
   let tree;
   beforeEach(() => {
-    tree = new Tree();
+    tree = new treeClass();
   });
 
-  describe('addNewNode', () => {
+  describe('#addNewNode', () => {
     describe('when add a new root element', () => {
       beforeEach(() => {
         tree.addNewNode('some new node', {data: 'interesting'}, []);
@@ -109,6 +112,7 @@ describe('tree#', () => {
         let node = [{
           id: 'some id',
         }];
+        tree.addNewNode('some id', {}, []);
 
         expect(tree.translateTreeNodeIdFromACITree(node)).toEqual(['some id']);
       });
@@ -125,10 +129,84 @@ describe('tree#', () => {
             id: 'some id',
           }];
 
+          tree.addNewNode('parent id', {}, []);
+          tree.addNewNode('some id', {}, ['parent id']);
+
           expect(tree.translateTreeNodeIdFromACITree(node))
             .toEqual(['parent id', 'some id']);
         });
       });
     });
   });
+};
+
+describe('tree tests', () => {
+  describe('Tree', () => {
+    treeTests(Tree);
+  });
+
+  describe('TreeFake', () => {
+    treeTests(TreeFake);
+
+    describe('#hasParent', () => {
+      context('tree contains multiple levels', () => {
+        let tree;
+        beforeEach(() => {
+          tree = new TreeFake();
+          tree.addNewNode('level1', {data: 'interesting'}, []);
+          tree.addNewNode('level2', {data: 'interesting'}, ['level1']);
+        });
+
+        context('node is at the first level', () => {
+          it('returns false', () => {
+            expect(tree.hasParent([{id: 'level1'}])).toBe(false);
+          });
+        });
+
+        context('node is at the second level', () => {
+          it('returns true', () => {
+            expect(tree.hasParent([{id: 'level2'}])).toBe(true);
+          });
+        });
+      });
+    });
+
+    describe('#parent', () => {
+      let tree;
+      beforeEach(() => {
+        tree = new TreeFake();
+        tree.addNewNode('level1', {data: 'interesting'}, []);
+        tree.addNewNode('level2', {data: 'interesting'}, ['level1']);
+      });
+
+      context('node is the root', () => {
+        it('returns null', () => {
+          expect(tree.parent([{id: 'level1'}])).toBeNull();
+        });
+      });
+
+      context('node is not root', () => {
+        it('returns root element', () => {
+          expect(tree.parent([{id: 'level2'}])).toEqual([{id: 'level1'}]);
+        });
+      });
+    });
+
+    describe('#itemData', () => {
+      let tree;
+      beforeEach(() => {
+        tree = new TreeFake();
+        tree.addNewNode('level1', {data: 'interesting'}, []);
+        tree.addNewNode('level2', {data: 'expected data'}, ['level1']);
+      });
+
+      context('retrieve data from the node', () => {
+        it('return the node data', () => {
+          expect(tree.itemData([{id: 'level2'}])).toEqual({data: 'expected' +
+            ' data'})
+        });
+      });
+    });
+  });
 });
+

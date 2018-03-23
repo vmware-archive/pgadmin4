@@ -37,8 +37,8 @@ export class Tree {
     this.aciTreeApi = undefined;
   }
 
-  addNewNode(id, data, parentId) {
-    const parent = this.findNode(parentId);
+  addNewNode(id, data, path) {
+    const parent = this.findNode(path);
     return this.createOrUpdateNode(id, data, parent);
   }
 
