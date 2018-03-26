@@ -6,7 +6,7 @@
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////////////////
-class TreeNode {
+export class TreeNode {
   constructor(id, data, parent) {
     this.id = id;
     this.data = data;
@@ -19,7 +19,7 @@ class TreeNode {
   }
 
   hasParent() {
-    return this.parentNode !== null;
+    return this.parentNode !== null && this.parentNode !== undefined ;
   }
 
   parent() {
@@ -47,6 +47,10 @@ export class Tree {
       return this.rootNode;
     }
     return findInTree(this.rootNode, path.join('.'));
+  }
+
+  findNodeByDomElement(domElement) {
+    return this.findNode(this.translateTreeNodeIdFromACITree(domElement));
   }
 
   register($treeJQuery) {
@@ -81,7 +85,7 @@ export class Tree {
   translateTreeNodeIdFromACITree(aciTreeNode) {
     let currentTreeNode = aciTreeNode;
     let path = [];
-    while (currentTreeNode !== null && currentTreeNode.length > 0) {
+    while (currentTreeNode !== null && currentTreeNode !== undefined && currentTreeNode.length > 0) {
       path.unshift(this.aciTreeApi.getId(currentTreeNode));
       if (this.aciTreeApi.hasParent(currentTreeNode)) {
         currentTreeNode = this.aciTreeApi.parent(currentTreeNode);

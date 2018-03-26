@@ -7,28 +7,39 @@
 //
 //////////////////////////////////////////////////////////////
 
-var backup_supported_nodes = [
+const backupSupportedNodes = [
   'database', 'schema', 'table', 'partition',
 ];
 
-export function menu_enabled(itemData, item) {
-  let t = this.tree,
-    i = item,
-    d = itemData,
-    parent_item = t.hasParent(i) ? t.parent(i) : null,
-    parent_data = parent_item ? t.itemData(parent_item) : null;
+function isNodeTypeSupported(nodeDataType, parentNodeType) {
+  return _.indexOf(backupSupportedNodes, nodeDataType) !== -1
+    && parentNodeType !== 'catalog';
+}
 
-  if (!_.isUndefined(d) && !_.isNull(d) && !_.isNull(parent_data)) {
-    if (_.indexOf(backup_supported_nodes, d._type) !== -1 &&
-      parent_data._type != 'catalog') {
-      if (d._type == 'database' && d.allowConn)
-        return true;
-      else if (d._type != 'database')
-        return true;
-      else
-        return false;
-    } else
-      return false;
-  } else
+function isProvidedDataValid(treeNodeData) {
+  return !_.isUndefined(treeNodeData) && !_.isNull(treeNodeData);
+}
+
+function doesNodeHaveMenu(treeNodeData) {
+  return (treeNodeData._type === 'database' && treeNodeData.allowConn)
+    || treeNodeData._type !== 'database';
+}
+
+function retrieveParentNodeType(treeNode) {
+  if (!treeNode.hasParent()) {
+    return null;
+  }
+  return treeNode.parent().getData()._type;
+}
+
+export function menuEnabled(treeNodeData, domTreeNode) {
+  let treeNode = this.treeMenu.findNodeByDomElement(domTreeNode);
+  let parentNodeType = retrieveParentNodeType(treeNode);
+
+  if (isProvidedDataValid(treeNodeData) && !_.isNull(parentNodeType)) {
+    return isNodeTypeSupported(treeNodeData._type, parentNodeType)
+      && doesNodeHaveMenu(treeNodeData);
+  } else {
     return false;
+  }
 }

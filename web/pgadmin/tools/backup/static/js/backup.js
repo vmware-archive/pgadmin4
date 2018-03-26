@@ -3,9 +3,10 @@ define([
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'pgadmin.alertifyjs', 'backbone', 'pgadmin.backgrid',
   'pgadmin.backform', 'pgadmin.browser', 'sources/utils',
+  'sources/backup/menu_utils',
 ], function(
   gettext, url_for, $, _, S, alertify, Backbone, Backgrid, Backform, pgBrowser,
-commonUtils
+commonUtils, menuUtils
 ) {
 
   // if module is already initialized, refer to that.
@@ -406,27 +407,6 @@ commonUtils
         menu will be enabled otherwise disabled.
         Also, hide it for system view in catalogs
       */
-      var menu_enabled = function(itemData, item) {
-        var t = pgBrowser.tree,
-          i = item,
-          d = itemData,
-          parent_item = t.hasParent(i) ? t.parent(i) : null,
-          parent_data = parent_item ? t.itemData(parent_item) : null;
-
-        if (!_.isUndefined(d) && !_.isNull(d) && !_.isNull(parent_data)) {
-          if (_.indexOf(backup_supported_nodes, d._type) !== -1 &&
-            parent_data._type != 'catalog') {
-            if (d._type == 'database' && d.allowConn)
-              return true;
-            else if (d._type != 'database')
-              return true;
-            else
-              return false;
-          } else
-            return false;
-        } else
-          return false;
-      };
 
       var menu_enabled_server = function(itemData) {
         // If server node selected && connected
@@ -483,7 +463,7 @@ commonUtils
         priority: 11,
         label: gettext('Backup...'),
         icon: 'fa fa-floppy-o',
-        enable: menu_enabled,
+        enable: menuUtils.menuEnabled.bind(pgBrowser),
       }];
 
       for (var idx = 0; idx < backup_supported_nodes.length; idx++) {
@@ -496,7 +476,7 @@ commonUtils
           priority: 11,
           label: gettext('Backup...'),
           icon: 'fa fa-floppy-o',
-          enable: menu_enabled,
+          enable: menuUtils.menuEnabled.bind(pgBrowser),
         });
       }
 

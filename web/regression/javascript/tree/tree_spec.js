@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-import {Tree} from "../../../pgadmin/static/js/tree/tree";
+import {Tree, TreeNode} from "../../../pgadmin/static/js/tree/tree";
 import {TreeFake} from "./tree_fake";
 
 const context = describe;
@@ -141,6 +141,30 @@ const treeTests = (treeClass) => {
 };
 
 describe('tree tests', () => {
+  describe('TreeNode', () => {
+    describe('#hasParent', () => {
+      context('parent is null', () => {
+        it('returns false', () => {
+          let treeNode = new TreeNode('123', {}, null);
+          expect(treeNode.hasParent()).toBe(false);
+        });
+      });
+      context('parent is undefined', () => {
+        it('returns false', () => {
+          let treeNode = new TreeNode('123', {}, undefined);
+          expect(treeNode.hasParent()).toBe(false);
+        });
+      });
+      context('parent exists', () => {
+        it('returns true', () => {
+          let parentNode = new TreeNode('456', {}, undefined);
+          let treeNode = new TreeNode('123', {}, parentNode);
+          expect(treeNode.hasParent()).toBe(true);
+        });
+      });
+    });
+  });
+
   describe('Tree', () => {
     treeTests(Tree);
   });
