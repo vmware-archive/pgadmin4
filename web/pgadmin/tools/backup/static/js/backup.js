@@ -395,27 +395,6 @@ commonUtils, menuUtils
 
       this.initialized = true;
 
-      // Define list of nodes on which backup context menu option appears
-      var backup_supported_nodes = [
-        'database', 'schema', 'table', 'partition',
-      ];
-
-      /**
-        Enable/disable backup menu in tools based
-        on node selected
-        if selected node is present in supported_nodes,
-        menu will be enabled otherwise disabled.
-        Also, hide it for system view in catalogs
-      */
-
-      var menu_enabled_server = function(itemData) {
-        // If server node selected && connected
-        if (!_.isUndefined(itemData) && !_.isNull(itemData))
-          return (('server' === itemData._type) && itemData.connected);
-        else
-          return false;
-      };
-
       // Define the nodes on which the menus to be appear
       var menus = [{
         name: 'backup_global',
@@ -425,7 +404,7 @@ commonUtils, menuUtils
         priority: 12,
         label: gettext('Backup Globals...'),
         icon: 'fa fa-floppy-o',
-        enable: menu_enabled_server,
+        enable: menuUtils.menuEnabledServer,
       }, {
         name: 'backup_server',
         module: this,
@@ -434,7 +413,7 @@ commonUtils, menuUtils
         priority: 12,
         label: gettext('Backup Server...'),
         icon: 'fa fa-floppy-o',
-        enable: menu_enabled_server,
+        enable: menuUtils.menuEnabledServer,
       }, {
         name: 'backup_global_ctx',
         module: this,
@@ -444,7 +423,7 @@ commonUtils, menuUtils
         priority: 12,
         label: gettext('Backup Globals...'),
         icon: 'fa fa-floppy-o',
-        enable: menu_enabled_server,
+        enable: menuUtils.menuEnabledServer,
       }, {
         name: 'backup_server_ctx',
         module: this,
@@ -454,7 +433,7 @@ commonUtils, menuUtils
         priority: 12,
         label: gettext('Backup Server...'),
         icon: 'fa fa-floppy-o',
-        enable: menu_enabled_server,
+        enable: menuUtils.menuEnabledServer,
       }, {
         name: 'backup_object',
         module: this,
@@ -466,10 +445,10 @@ commonUtils, menuUtils
         enable: menuUtils.menuEnabled.bind(pgBrowser),
       }];
 
-      for (var idx = 0; idx < backup_supported_nodes.length; idx++) {
+      for (var idx = 0; idx < menuUtils.backupSupportedNodes.length; idx++) {
         menus.push({
-          name: 'backup_' + backup_supported_nodes[idx],
-          node: backup_supported_nodes[idx],
+          name: 'backup_' + menuUtils.backupSupportedNodes[idx],
+          node: menuUtils.backupSupportedNodes[idx],
           module: this,
           applies: ['context'],
           callback: 'backup_objects',

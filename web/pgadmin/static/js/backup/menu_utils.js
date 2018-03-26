@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-const backupSupportedNodes = [
+export const backupSupportedNodes = [
   'database', 'schema', 'table', 'partition',
 ];
 
@@ -42,4 +42,13 @@ export function menuEnabled(treeNodeData, domTreeNode) {
   } else {
     return false;
   }
+}
+
+function isNodeAServerAndConnected(treeNodeData) {
+  return (('server' === treeNodeData._type) && treeNodeData.connected);
+}
+
+export function menuEnabledServer(treeNodeData) {
+  return isProvidedDataValid(treeNodeData)
+    && isNodeAServerAndConnected(treeNodeData);
 }
