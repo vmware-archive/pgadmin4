@@ -29,14 +29,12 @@ define('pgadmin.node.trigger', [
         node: 'trigger',
         label: gettext('Triggers'),
         type: 'coll-trigger',
-        getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
         columns: ['name', 'description'],
       });
   }
 
   if (!pgBrowser.Nodes['trigger']) {
     pgAdmin.Browser.Nodes['trigger'] = pgBrowser.Node.extend({
-      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       parent_type: ['table', 'view', 'partition'],
       collection_type: ['coll-table', 'coll-view'],
       type: 'trigger',

@@ -1,13 +1,17 @@
 define('pgadmin.node.table', [
+  'sources/table',
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'sources/pgadmin', 'pgadmin.browser',
   'pgadmin.alertifyjs', 'pgadmin.backform', 'pgadmin.backgrid',
   'pgadmin.tables.js/show_advanced_tab',
+  'sources/menu/can_create',
+
   'pgadmin.browser.collection', 'pgadmin.node.column',
   'pgadmin.node.constraints', 'pgadmin.browser.table.partition.utils',
 ], function(
+  tableFunctions,
   gettext, url_for, $, _, S, pgAdmin, pgBrowser, Alertify, Backform, Backgrid,
-  ShowAdvancedTab
+  ShowAdvancedTab, canCreate
 ) {
 
   if (!pgBrowser.Nodes['coll-table']) {
@@ -26,7 +30,6 @@ define('pgadmin.node.table', [
 
   if (!pgBrowser.Nodes['table']) {
     pgBrowser.Nodes['table'] = pgBrowser.Node.extend({
-      getTreeNodeHierarchy: pgBrowser.tableChildTreeNodeHierarchy,
       type: 'table',
       label: gettext('Table'),
       collection_type: 'coll-table',
@@ -118,53 +121,21 @@ define('pgadmin.node.table', [
       callbacks: {
         /* Enable trigger(s) on table */
         enable_triggers_on_table: function(args) {
-          var params = {'enable': true };
-          this.callbacks.set_triggers.apply(this, [args, params]);
+          tableFunctions.enableTriggers(
+            pgBrowser.treeMenu,
+            Alertify,
+            this.generate_url.bind(this),
+            args
+          );
         },
         /* Disable trigger(s) on table */
         disable_triggers_on_table: function(args) {
-          var params = {'enable': false };
-          this.callbacks.set_triggers.apply(this, [args, params]);
-        },
-        set_triggers: function(args, params) {
-          // This function will send request to enable or
-          // disable triggers on table level
-          var input = args || {},
-            obj = this,
-            t = pgBrowser.tree,
-            i = input.item || t.selected(),
-            d = i && i.length == 1 ? t.itemData(i) : undefined;
-          if (!d)
-            return false;
-
-          $.ajax({
-            url: obj.generate_url(i, 'set_trigger' , d, true),
-            type:'PUT',
-            data: params,
-            dataType: 'json',
-            success: function(res) {
-              if (res.success == 1) {
-                Alertify.success(res.info);
-                t.unload(i);
-                t.setInode(i);
-                t.deselect(i);
-                setTimeout(function() {
-                  t.select(i);
-                }, 10);
-              }
-            },
-            error: function(xhr) {
-              try {
-                var err = $.parseJSON(xhr.responseText);
-                if (err.success == 0) {
-                  Alertify.error(err.errormsg);
-                }
-              } catch (e) {
-                console.warn(e.stack || e);
-              }
-              t.unload(i);
-            },
-          });
+          tableFunctions.disableTriggers(
+            pgBrowser.treeMenu,
+            Alertify,
+            this.generate_url.bind(this),
+            args
+          );
         },
         /* Truncate table */
         truncate_table: function(args) {
@@ -1329,32 +1300,7 @@ define('pgadmin.node.table', [
         },
       }),
       canCreate: function(itemData, item, data) {
-        //If check is false then , we will allow create menu
-        if (data && data.check == false)
-          return true;
-
-        var t = pgBrowser.tree, i = item, d = itemData;
-        // To iterate over tree to check parent node
-        while (i) {
-          // If it is schema then allow user to create table
-          if (_.indexOf(['schema'], d._type) > -1)
-            return true;
-
-          if ('coll-table' == d._type) {
-            //Check if we are not child of catalog
-            var prev_i = t.hasParent(i) ? t.parent(i) : null,
-              prev_d = prev_i ? t.itemData(prev_i) : null;
-            if( prev_d._type == 'catalog') {
-              return false;
-            } else {
-              return true;
-            }
-          }
-          i = t.hasParent(i) ? t.parent(i) : null;
-          d = i ? t.itemData(i) : null;
-        }
-        // by default we do not want to allow create menu
-        return true;
+        return canCreate.canCreate(pgBrowser, 'coll-table', item, data);
       },
       // Check to whether table has disable trigger(s)
       canCreate_with_trigger_enable: function(itemData, item, data) {

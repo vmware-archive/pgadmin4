@@ -1,8 +1,10 @@
 define('pgadmin.node.sequence', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'sources/pgadmin', 'pgadmin.browser', 'pgadmin.backform',
+  'sources/menu/can_create',
   'pgadmin.browser.collection',
-], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform) {
+], function(gettext, url_for, $, _, S, pgAdmin, pgBrowser, Backform,
+   canCreate) {
 
   // Extend the browser's collection class for sequence collection
   if (!pgBrowser.Nodes['coll-sequence']) {
@@ -61,32 +63,7 @@ define('pgadmin.node.sequence', [
       canDrop: pgBrowser.Nodes['schema'].canChildDrop,
       canDropCascade: pgBrowser.Nodes['schema'].canChildDrop,
       canCreate: function(itemData, item, data) {
-          //If check is false then , we will allow create menu
-        if (data && data.check == false)
-          return true;
-
-        var t = pgBrowser.tree, i = item, d = itemData;
-          // To iterate over tree to check parent node
-        while (i) {
-            // If it is schema then allow user to create collation
-          if (_.indexOf(['schema'], d._type) > -1)
-            return true;
-
-          if ('coll-sequence' == d._type) {
-              //Check if we are not child of catalog
-            var prev_i = t.hasParent(i) ? t.parent(i) : null,
-              prev_d = prev_i ? t.itemData(prev_i) : null;
-            if( prev_d._type == 'catalog') {
-              return false;
-            } else {
-              return true;
-            }
-          }
-          i = t.hasParent(i) ? t.parent(i) : null;
-          d = i ? t.itemData(i) : null;
-        }
-          // by default we want to allow create menu
-        return true;
+        return canCreate.canCreate(pgBrowser, 'coll-sequence', item, data);
       },
       // Define the model for sequence node.
       model: pgBrowser.Node.Model.extend({
