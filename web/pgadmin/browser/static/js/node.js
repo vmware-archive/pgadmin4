@@ -1,9 +1,12 @@
 define('pgadmin.browser.node', [
+  'sources/tree/pgadmin_tree_node',
   'sources/gettext', 'jquery', 'underscore', 'underscore.string', 'sources/pgadmin',
   'pgadmin.browser.menu', 'backbone', 'pgadmin.alertifyjs', 'pgadmin.browser.datamodel',
   'backform', 'sources/browser/generate_url', 'sources/utils', 'pgadmin.browser.utils',
   'pgadmin.backform',
-], function(gettext, $, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform, generateUrl, commonUtils) {
+], function(
+  pgadminTreeNode,
+  gettext, $, _, S, pgAdmin, Menu, Backbone, Alertify, pgBrowser, Backform, generateUrl, commonUtils) {
 
   var wcDocker = window.wcDocker,
     keyCode = {
@@ -1566,7 +1569,6 @@ define('pgadmin.browser.node', [
      * depends, statistics
      */
     generate_url: function(item, type, d, with_id, info) {
-
       var opURL = {
           'create': 'obj',
           'drop': 'obj',
@@ -1608,24 +1610,7 @@ define('pgadmin.browser.node', [
     Collection: pgBrowser.DataCollection,
     // Base class for Node Data Model
     Model: pgBrowser.DataModel,
-    getTreeNodeHierarchy: function(i) {
-      var idx = 0,
-        res = {},
-        t = pgBrowser.tree,
-        d;
-      do {
-        d = t.itemData(i);
-        if (d._type in pgBrowser.Nodes && pgBrowser.Nodes[d._type].hasId) {
-          res[d._type] = _.extend({}, d, {
-            'priority': idx,
-          });
-          idx -= 1;
-        }
-        i = t.hasParent(i) ? t.parent(i) : null;
-      } while (i);
-
-      return res;
-    },
+    getTreeNodeHierarchy: pgadminTreeNode.getTreeNodeHierarchyFromIdentifier.bind(pgBrowser),
     cache: function(url, node_info, level, data) {
       var cached = this.cached = this.cached || {},
         hash = url,

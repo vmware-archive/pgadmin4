@@ -2,8 +2,10 @@
 define('pgadmin.node.function', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'backbone',
   'sources/pgadmin', 'pgadmin.browser', 'pgadmin.backform',
+  'sources/menu/can_create',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege',
-], function(gettext, url_for, $, _, Backbone, pgAdmin, pgBrowser, Backform) {
+], function(gettext, url_for, $, _, Backbone, pgAdmin, pgBrowser, Backform,
+   canCreate) {
 
   if (!pgBrowser.Nodes['coll-function']) {
     pgBrowser.Nodes['coll-function'] =
@@ -439,32 +441,7 @@ define('pgadmin.node.function', [
         },
       }),
       canCreate: function(itemData, item, data) {
-        //If check is false then , we will allow create menu
-        if (data && data.check == false)
-          return true;
-
-        var t = pgBrowser.tree, i = item, d = itemData;
-        // To iterate over tree to check parent node
-        while (i) {
-          // If it is schema then allow user to create Function
-          if (_.indexOf(['schema'], d._type) > -1)
-            return true;
-
-          if ('coll-function' == d._type) {
-            //Check if we are not child of catalog
-            var prev_i = t.hasParent(i) ? t.parent(i) : null,
-              prev_d = prev_i ? t.itemData(prev_i) : null;
-            if( prev_d._type == 'catalog') {
-              return false;
-            } else {
-              return true;
-            }
-          }
-          i = t.hasParent(i) ? t.parent(i) : null;
-          d = i ? t.itemData(i) : null;
-        }
-        // by default we do not want to allow create menu
-        return true;
+        return canCreate.canCreate(pgBrowser, 'coll-function', item, data);
       },
     });
 
