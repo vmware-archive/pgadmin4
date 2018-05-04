@@ -7,10 +7,10 @@
 //
 //////////////////////////////////////////////////////////////
 
-import gettext from '../../../../static/js/gettext';
+import gettext from '../gettext';
 import {sprintf} from 'sprintf-js';
-import Backform from '../../../../static/js/backform.pgadmin';
-import {Dialog} from '../../../../static/js/alertify/dialog';
+import Backform from '../backform.pgadmin';
+import {Dialog} from '../alertify/dialog';
 
 export class RestoreDialog extends Dialog {
   constructor(pgBrowser, $, alertify, RestoreModel, backform = Backform) {

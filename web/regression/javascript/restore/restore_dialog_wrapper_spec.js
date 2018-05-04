@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 import {TreeFake} from '../tree/tree_fake';
-import {RestoreDialogWrapper} from '../../../pgadmin/tools/restore/static/js/restore_dialog_wrapper';
+import {RestoreDialogWrapper} from '../../../pgadmin/static/js/restore/restore_dialog_wrapper';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios/index';
 import {FakeModel} from '../fake_model';

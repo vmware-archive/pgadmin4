@@ -1,9 +1,9 @@
 define('pgadmin.node.table', [
-  'pgadmin.tables.js/enable_disable_triggers',
+  'sources/table/enable_disable_triggers',
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'sources/pgadmin', 'pgadmin.browser',
   'pgadmin.alertifyjs', 'pgadmin.backform', 'pgadmin.backgrid',
-  'pgadmin.tables.js/show_advanced_tab',
+  'sources/table/show_advanced_tab',
   'sources/menu/can_create',
 
   'pgadmin.browser.collection', 'pgadmin.node.column',

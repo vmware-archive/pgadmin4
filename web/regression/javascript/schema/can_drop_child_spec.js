@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-import {canDropChild} from '../../../pgadmin/browser/server_groups/servers/databases/schemas/static/js/can_drop_child';
+import {canDropChild} from '../../../pgadmin/static/js/schema/can_drop_child';
 import {TreeFake} from '../tree/tree_fake';
 
 let context = describe;

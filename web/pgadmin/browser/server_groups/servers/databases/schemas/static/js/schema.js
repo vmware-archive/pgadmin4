@@ -1,7 +1,7 @@
 define('pgadmin.node.schema', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'sources/pgadmin', 'pgadmin.browser', 'pgadmin.backform', 'pgadmin.backgrid',
-  'pgadmin.node.schema.dir/can_drop_child',
+  'sources/schema/can_drop_child',
   'pgadmin.browser.collection', 'pgadmin.browser.server.privilege',
 ], function(gettext, url_for, $, _, pgAdmin, pgBrowser, Backform, Backgrid,
 canDropChild) {

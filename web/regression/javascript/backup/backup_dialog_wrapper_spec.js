@@ -1,5 +1,5 @@
 import {TreeFake} from '../tree/tree_fake';
-import {BackupDialogWrapper} from '../../../pgadmin/tools/backup/static/js/backup_dialog_wrapper';
+import {BackupDialogWrapper} from '../../../pgadmin/static/js/backup/backup_dialog_wrapper';
 import axios from 'axios/index';
 import MockAdapter from 'axios-mock-adapter';
 import {FakeModel} from '../fake_model';

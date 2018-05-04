@@ -3,7 +3,7 @@ define([
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore', 'backbone',
   'pgadmin.alertifyjs', 'pgadmin.backgrid', 'pgadmin.backform',
   'pgadmin.browser', 'pgadmin.browser.node',
-  'tools/grant_wizard/static/js/menu_utils',
+  'sources/grant/wizard/menu_utils',
   'sources/menu/menu_enabled',
 
   'backgrid.select.all',

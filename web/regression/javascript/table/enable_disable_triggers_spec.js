@@ -12,7 +12,7 @@ import axios from 'axios/index';
 import {
   enableTriggers,
   disableTriggers,
-} from '../../../pgadmin/browser/server_groups/servers/databases/schemas/tables/static/js/enable_disable_triggers';
+} from '../../../pgadmin/static/js/table/enable_disable_triggers';
 import {TreeFake} from '../tree/tree_fake';
 import {TreeNode} from '../../../pgadmin/static/js/tree/tree';
 

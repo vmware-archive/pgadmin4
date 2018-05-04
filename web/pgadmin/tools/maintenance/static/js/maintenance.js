@@ -2,7 +2,7 @@ define([
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'pgadmin.alertifyjs', 'sources/pgadmin', 'pgadmin.browser', 'backbone',
   'backgrid', 'backform', 'sources/utils',
-  'tools/maintenance/static/js/menu_utils',
+  'sources/maintenance/menu_utils',
   'sources/menu/menu_enabled',
   'pgadmin.backform', 'pgadmin.backgrid',
   'pgadmin.browser.node.ui',

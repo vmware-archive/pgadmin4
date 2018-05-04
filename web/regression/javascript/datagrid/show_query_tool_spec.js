@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////
 
 import {TreeFake} from '../tree/tree_fake';
-import {showQueryTool} from '../../../pgadmin/tools/datagrid/static/js/show_query_tool';
+import {showQueryTool} from '../../../pgadmin/static/js/datagrid/show_query_tool';
 import {TreeNode} from '../../../pgadmin/static/js/tree/tree';
 
 const context = describe;

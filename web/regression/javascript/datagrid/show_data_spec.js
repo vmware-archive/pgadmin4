@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-import {showDataGrid} from '../../../pgadmin/tools/datagrid/static/js/show_data';
+import {showDataGrid} from '../../../pgadmin/static/js/datagrid/show_data';
 import {TreeFake} from '../tree/tree_fake';
 import {TreeNode} from '../../../pgadmin/static/js/tree/tree';
 

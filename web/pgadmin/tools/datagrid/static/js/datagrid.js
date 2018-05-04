@@ -2,9 +2,9 @@ define('pgadmin.datagrid', [
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'pgadmin.alertifyjs', 'sources/pgadmin', 'bundled_codemirror',
   'sources/sqleditor_utils', 'backbone',
-  'tools/datagrid/static/js/show_data',
-  'tools/datagrid/static/js/get_panel_title',
-  'tools/datagrid/static/js/show_query_tool',
+  'sources/datagrid/show_data',
+  'sources/datagrid/get_panel_title',
+  'sources/datagrid/show_query_tool',
   'wcdocker',
 ], function(
   gettext, url_for, $, _, alertify, pgAdmin, codemirror, sqlEditorUtils,

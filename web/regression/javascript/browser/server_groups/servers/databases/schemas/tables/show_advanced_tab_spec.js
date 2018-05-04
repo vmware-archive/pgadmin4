@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-import {show_advanced_tab} from '../../../../../../../../pgadmin/browser/server_groups/servers/databases/schemas/tables/static/js/show_advanced_tab';
+import {show_advanced_tab} from '../../../../../../../../pgadmin/static/js/table/show_advanced_tab';
 
 describe('#show_advanced_tab', () => {
   let tableModel;

@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-import {isProvidedDataValid} from '../../../../static/js/menu/menu_enabled';
+import {isProvidedDataValid} from '../menu/menu_enabled';
 
 export const backupSupportedNodes = [
   'database', 'schema', 'table', 'partition',

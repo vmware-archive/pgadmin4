@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 import {TreeFake} from '../tree/tree_fake';
-import {RestoreDialog} from '../../../pgadmin/tools/restore/static/js/restore_dialog';
+import {RestoreDialog} from '../../../pgadmin/static/js/restore/restore_dialog';
 
 const context = describe;
 

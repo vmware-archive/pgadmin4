@@ -6,7 +6,7 @@
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////
-import {BackupDialog} from '../../../pgadmin/tools/backup/static/js/backup_dialog';
+import {BackupDialog} from '../../../pgadmin/static/js/backup/backup_dialog';
 import {TreeFake} from '../tree/tree_fake';
 
 const context = describe;

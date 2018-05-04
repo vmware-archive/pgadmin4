@@ -7,8 +7,8 @@
 //
 //////////////////////////////////////////////////////////////
 
-import * as BackupDialog from '../../../tools/backup/static/js/backup_dialog_wrapper';
-import {RestoreDialogWrapper} from '../../../tools/restore/static/js/restore_dialog_wrapper';
+import * as BackupDialog from '../backup/backup_dialog_wrapper';
+import {RestoreDialogWrapper} from '../restore/restore_dialog_wrapper';
 
 export class DialogFactory {
   constructor(pgBrowser, $,

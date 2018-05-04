@@ -3,8 +3,8 @@ define([
   'sources/gettext', 'sources/url_for', 'jquery', 'underscore',
   'underscore.string', 'pgadmin.alertifyjs', 'backbone', 'pgadmin.backgrid',
   'pgadmin.backform', 'pgadmin.browser', 'sources/utils',
-  'tools/backup/static/js/menu_utils',
-  'tools/backup/static/js/backup_dialog',
+  'sources/backup/menu_utils',
+  'sources/backup/backup_dialog',
   'sources/menu/menu_enabled',
 ], function(
   gettext, url_for, $, _, S, alertify, Backbone, Backgrid, Backform, pgBrowser,

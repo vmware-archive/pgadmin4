@@ -6,9 +6,9 @@
 // This software is released under the PostgreSQL Licence
 //
 //////////////////////////////////////////////////////////////
-import gettext from '../../../../static/js/gettext';
-import url_for from '../../../../static/js/url_for';
-import {getTreeNodeHierarchyFromIdentifier} from '../../../../static/js/tree/pgadmin_tree_node';
+import gettext from '../gettext';
+import url_for from '../url_for';
+import {getTreeNodeHierarchyFromIdentifier} from '../tree/pgadmin_tree_node';
 
 export function showDataGrid(
   datagrid,

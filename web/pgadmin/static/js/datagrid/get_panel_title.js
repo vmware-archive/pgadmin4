@@ -7,7 +7,7 @@
 //
 //////////////////////////////////////////////////////////////
 
-import {getTreeNodeHierarchyFromIdentifier} from '../../../../static/js/tree/pgadmin_tree_node';
+import {getTreeNodeHierarchyFromIdentifier} from '../tree/pgadmin_tree_node';
 
 function getDatabaseLabel(parentData) {
   return parentData.database ? parentData.database.label

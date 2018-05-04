@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////
 
 
-import {menuEnabledServer} from '../../../pgadmin/tools/backup/static/js/menu_utils';
+import {menuEnabledServer} from '../../../pgadmin/static/js/backup/menu_utils';
 
 const context = describe;
 

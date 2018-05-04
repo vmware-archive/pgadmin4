@@ -7,9 +7,9 @@
 //
 //////////////////////////////////////////////////////////////
 
-import gettext from '../../../../static/js/gettext';
-import Backform from '../../../../static/js/backform.pgadmin';
-import {Dialog} from '../../../../static/js/alertify/dialog';
+import gettext from '../gettext';
+import Backform from '../backform.pgadmin';
+import {Dialog} from '../alertify/dialog';
 
 export class BackupDialog extends Dialog {
   constructor(pgBrowser, $, alertify, BackupModel, backform = Backform) {

@@ -1,22 +1,29 @@
-import {getTreeNodeHierarchyFromElement} from '../../../../static/js/tree/pgadmin_tree_node';
-import axios from 'axios/index';
-import _ from 'underscore';
-import gettext from '../../../../static/js/gettext';
-import url_for from '../../../../static/js/url_for';
-import {DialogWrapper} from '../../../../static/js/alertify/dialog_wrapper';
+/////////////////////////////////////////////////////////////
+//
+// pgAdmin 4 - PostgreSQL Tools
+//
+// Copyright (C) 2013 - 2018, The pgAdmin Development Team
+// This software is released under the PostgreSQL Licence
+//
+//////////////////////////////////////////////////////////////
 
-export class RestoreDialogWrapper extends DialogWrapper {
+import {getTreeNodeHierarchyFromElement} from '../tree/pgadmin_tree_node';
+import axios from 'axios/index';
+import gettext from '../gettext';
+import url_for from '../url_for';
+import _ from 'underscore';
+import {DialogWrapper} from '../alertify/dialog_wrapper';
+
+export class BackupDialogWrapper extends DialogWrapper {
   constructor(dialogContainerSelector, dialogTitle, typeOfDialog,
               jquery, pgBrowser, alertify, dialogModel, backform) {
     super(dialogContainerSelector, dialogTitle, jquery,
       pgBrowser, alertify, dialogModel, backform);
+    this.typeOfDialog = typeOfDialog;
   }
 
-  main(title, item, data, node) {
+  main(title) {
     this.set('title', title);
-    this.setting('pg_node', node);
-    this.setting('pg_item', item);
-    this.setting('pg_item_data', data);
   }
 
   setup() {
@@ -28,7 +35,7 @@ export class RestoreDialogWrapper extends DialogWrapper {
           name: 'object_help',
           type: 'button',
           url: 'backup.html',
-          label: gettext('Restore'),
+          label: gettext('Backup'),
         },
       }, {
         text: '',
@@ -37,22 +44,20 @@ export class RestoreDialogWrapper extends DialogWrapper {
         attrs: {
           name: 'dialog_help',
           type: 'button',
-          label: gettext('Restore'),
+          label: gettext('Backup'),
           url: url_for('help.static', {
-            'filename': 'restore_dialog.html',
+            'filename': 'backup_dialog.html',
           }),
         },
       }, {
-        text: gettext('Restore'),
+        text: gettext('Backup'),
         key: 13,
-        className: 'btn btn-primary fa fa-upload pg-alertify-button',
-        restore: true,
-        'data-btn-name': 'restore',
+        className: 'btn btn-primary fa fa-lg fa-save pg-alertify-button',
+        'data-btn-name': 'backup',
       }, {
         text: gettext('Cancel'),
         key: 27,
         className: 'btn btn-danger fa fa-lg fa-times pg-alertify-button',
-        restore: false,
         'data-btn-name': 'cancel',
       }],
       // Set options for dialog
@@ -72,7 +77,7 @@ export class RestoreDialogWrapper extends DialogWrapper {
   }
 
   prepare() {
-    this.disableRestoreButton();
+    this.disableBackupButton();
 
     const $container = this.jquery(this.dialogContainerSelector);
     const selectedTreeNode = this.getSelectedNode();
@@ -82,10 +87,14 @@ export class RestoreDialogWrapper extends DialogWrapper {
     }
 
     const node = this.pgBrowser.Nodes[selectedTreeNodeData._type];
+    if (this.dialogTitle === null) {
+      const title = `Backup (${node.label}: ${selectedTreeNodeData.label})`;
+      this.main(title);
+    }
 
     const treeInfo = getTreeNodeHierarchyFromElement(this.pgBrowser, selectedTreeNode);
-    const dialog = this.createDialog(node, treeInfo, $container);
-    this.addAlertifyClassToRestoreNodeChildNodes();
+    const dialog = this.createDialog(node, treeInfo, this.typeOfDialog, $container);
+    this.addAlertifyClassToBackupNodeChildNodes();
     dialog.render();
 
     this.elements.content.appendChild($container.get(0));
@@ -111,16 +120,18 @@ export class RestoreDialogWrapper extends DialogWrapper {
       return;
     }
 
-    if (this.wasRestoreButtonPressed(event)) {
+    if (this.wasBackupButtonPressed(event)) {
 
       if (!selectedTreeNodeData)
         return;
 
       const serverIdentifier = this.retrieveServerIdentifier(node, selectedTreeNode);
 
-      const dialogWrapper = this;
-      let urlShortcut = 'restore.create_job';
-
+      const dialog = this;
+      let urlShortcut = 'backup.create_server_job';
+      if (this.typeOfDialog === 'backup_objects') {
+        urlShortcut = 'backup.create_object_job';
+      }
       const baseUrl = url_for(urlShortcut, {
         'sid': serverIdentifier,
       });
@@ -137,13 +148,13 @@ export class RestoreDialogWrapper extends DialogWrapper {
         baseUrl,
         this.view.model.toJSON()
       ).then(function () {
-        dialogWrapper.alertify.success(gettext('Restore job created.'), 5);
-        dialogWrapper.pgBrowser.Events.trigger('pgadmin-bgprocess:created', dialogWrapper);
+        dialog.alertify.success(gettext('Backup job created.'), 5);
+        dialog.pgBrowser.Events.trigger('pgadmin-bgprocess:created', dialog);
       }).catch(function (error) {
         try {
           const err = error.response.data;
-          dialogWrapper.alertify.alert(
-            gettext('Restore job failed.'),
+          dialog.alertify.alert(
+            gettext('Backup job failed.'),
             err.errormsg
           );
         } catch (e) {
@@ -153,7 +164,7 @@ export class RestoreDialogWrapper extends DialogWrapper {
     }
   }
 
-  addAlertifyClassToRestoreNodeChildNodes() {
+  addAlertifyClassToBackupNodeChildNodes() {
     this.jquery(this.elements.body.childNodes[0]).addClass(
       'alertify_tools_dialog_properties obj_properties'
     );
@@ -169,18 +180,21 @@ export class RestoreDialogWrapper extends DialogWrapper {
     }
   }
 
-  disableRestoreButton() {
+  disableBackupButton() {
     this.__internal.buttons[2].element.disabled = true;
   }
 
-  enableRestoreButton() {
+  enableBackupButton() {
     this.__internal.buttons[2].element.disabled = false;
   }
 
-  createDialog(node, treeInfo, $container) {
-    const newModel = new this.dialogModel({
-      node_data: node,
-    }, {
+  createDialog(node, treeInfo, typeOfDialog, $container) {
+    let attributes = {};
+    if (typeOfDialog !== 'backup_objects') {
+      attributes['type'] = typeOfDialog;
+    }
+    // Instance of backbone model
+    const newModel = new this.dialogModel(attributes, {
       node_info: treeInfo,
     });
     const fields = this.backform.generateViewSchema(
@@ -208,48 +222,37 @@ export class RestoreDialogWrapper extends DialogWrapper {
     this.view.model.on('change', function () {
       if (!_.isUndefined(this.get('file')) && this.get('file') !== '') {
         this.errorModel.clear();
-        self.enableRestoreButton();
+        self.enableBackupButton();
       } else {
-        self.disableRestoreButton();
+        self.disableBackupButton();
         this.errorModel.set('file', gettext('Please provide a filename'));
       }
     });
   }
 
   setExtraParameters(selectedTreeNode, treeInfo) {
-    this.view.model.set('database', treeInfo.database._label);
-    if (!this.view.model.get('custom')) {
-      const nodeData = selectedTreeNode.getData();
+    if (this.typeOfDialog === 'backup_objects') {
 
-      switch (nodeData._type) {
-      case 'schema':
+      this.view.model.set('database', treeInfo.database._label);
+
+      const nodeData = selectedTreeNode.getData();
+      if (nodeData._type === 'schema') {
         this.view.model.set('schemas', [nodeData._label]);
-        break;
-      case 'table':
-        this.view.model.set('schemas', [treeInfo.schema._label]);
-        this.view.model.set('tables', [nodeData._label]);
-        break;
-      case 'function':
-        this.view.model.set('schemas', [treeInfo.schema._label]);
-        this.view.model.set('functions', [nodeData._label]);
-        break;
-      case 'index':
-        this.view.model.set('schemas', [treeInfo.schema._label]);
-        this.view.model.set('indexes', [nodeData._label]);
-        break;
-      case 'trigger':
-        this.view.model.set('schemas', [treeInfo.schema._label]);
-        this.view.model.set('triggers', [nodeData._label]);
-        break;
-      case 'trigger_func':
-        this.view.model.set('schemas', [treeInfo.schema._label]);
-        this.view.model.set('trigger_funcs', [nodeData._label]);
-        break;
+      }
+
+      if (nodeData._type === 'table') {
+        this.view.model.set('tables', [
+          [treeInfo.schema._label, nodeData._label],
+        ]);
+      }
+
+      if (_.isEmpty(this.view.model.get('ratio'))) {
+        this.view.model.unset('ratio');
       }
     }
   }
 
-  wasRestoreButtonPressed(event) {
-    return event.button['data-btn-name'] === 'restore';
+  wasBackupButtonPressed(event) {
+    return event.button['data-btn-name'] === 'backup';
   }
 }
