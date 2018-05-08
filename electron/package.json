@@ -1,0 +1,79 @@
+{
+  "name": "pgAdmin",
+  "version": "4.0.0",
+  "description": "some description",
+  "main": "src/index.js",
+  "repository": "git.postgresql.com",
+  "author": "pgAdmin Hackers",
+  "license": "BSD",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint src --color"
+  },
+  "keywords": [],
+  "config": {
+    "forge": {
+      "make_targets": {
+        "win32": [
+          "squirrel"
+        ],
+        "darwin": [
+          "zip"
+        ],
+        "linux": [
+          "deb"
+        ]
+      },
+      "electronPackagerConfig": {
+        "packageManager": "yarn",
+        "asar": false
+      },
+      "electronWinstallerConfig": {
+        "name": "electron"
+      },
+      "electronInstallerDebian": {
+        "icon": "assets/icons/linux/pgAdmin4.png",
+        "categories": [
+          "Utility"
+        ],
+        "homepage": "http://pgadmin.org"
+      },
+      "electronInstallerRedhat": {},
+      "github_repository": {
+        "owner": "",
+        "name": ""
+      },
+      "windowsStoreConfig": {
+        "packageName": "",
+        "name": "electron"
+      }
+    }
+  },
+  "dependencies": {
+    "electron-compile": "^6.4.2",
+    "electron-squirrel-startup": "^1.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "electron-forge": "^5.2.1",
+    "electron-prebuilt-compile": "2.0.0",
+    "eslint": "^3",
+    "eslint-config-airbnb": "^15",
+    "eslint-plugin-import": "^2",
+    "eslint-plugin-jsx-a11y": "^5",
+    "eslint-plugin-react": "^7",
+    "is-docker": "^1.1.0",
+    "jasmine": "^3.1.0",
+    "karma": "^2.0.2",
+    "karma-babel-preprocessor": "^7.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^1.1.2",
+    "karma-jasmine-html-reporter": "^1.0.0",
+    "karma-jasmine3-html-reporter": "^0.2.3"
+  }
+}
