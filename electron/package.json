@@ -60,6 +60,7 @@
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.24.1",
+    "babel-loader": "^7.1.4",
     "electron-forge": "^5.2.1",
     "electron-prebuilt-compile": "2.0.0",
     "eslint": "^3",
@@ -72,8 +73,12 @@
     "karma": "^2.0.2",
     "karma-babel-preprocessor": "^7.0.0",
     "karma-chrome-launcher": "^2.2.0",
+    "karma-electron": "^6.0.0",
     "karma-jasmine": "^1.1.2",
     "karma-jasmine-html-reporter": "^1.0.0",
-    "karma-jasmine3-html-reporter": "^0.2.3"
+    "karma-jasmine3-html-reporter": "^0.2.3",
+    "karma-webpack": "^3.0.0",
+    "webpack": "^4.8.1",
+    "webpack-babel-installer": "^1.0.0"
   }
 }
