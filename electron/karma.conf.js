@@ -1,4 +1,5 @@
 const isDocker = require('is-docker')();
+const webpackConfiguration = require('./webpack.config');
 /**
  * This is the Karma configuration file. It contains information about this skeleton
  * that provides the test runner with instructions on how to run the tests and
@@ -8,7 +9,6 @@ const isDocker = require('is-docker')();
  */
 module.exports = function (config) {
     config.set({
-
         /**
          * These are the files required to run the tests.
          *
@@ -16,12 +16,8 @@ module.exports = function (config) {
          * because it uses an older version of JavaScript.
          */
         files: [
-            './src/**/*.js'
+            './src/**/*_spec.js'
         ],
-        preprocessors: {
-            'src/**/*.js': ['babel'],
-            'test/**/*.js': ['babel']
-        },
         babelPreprocessor: {
             options: {
                 presets: ['env'],
@@ -34,12 +30,6 @@ module.exports = function (config) {
                 return file.originalPath;
             }
         },
-
-        /**
-         * We want to run the tests using the PhantomJS headless browser.
-         * This is especially useful for continuous integration.
-         */
-        browsers: ['Chrome'],
 
         /**
          * Use Mocha as the test framework, Sinon for mocking, and
@@ -67,7 +57,19 @@ module.exports = function (config) {
             },
         },
         browsers: ['ChromeCustom'],
-
+        /*karma-webpack config*/
+        preprocessors: {
+            //use webpack to support require() in test-suits .js files
+            //use babel-loader from webpack to compile es2015 features in .js files
+            //add webpack as preprocessor
+            './src/**/*.js': ['webpack']
+        },
+        webpackMiddleware: {
+            //turn off webpack bash output when run the tests
+            noInfo: true,
+            stats: 'errors-only'
+        },
+        webpack: webpackConfiguration,
         /**
          * List of plugins
          */
@@ -75,7 +77,9 @@ module.exports = function (config) {
             'karma-chrome-launcher',
             'karma-jasmine',
             'karma-jasmine-html-reporter',
-            'karma-babel-preprocessor'
+            'karma-babel-preprocessor',
+            'karma-webpack',
+            'karma-electron'
         ],
     });
 };
