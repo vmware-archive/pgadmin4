@@ -1,8 +1,8 @@
-import {app, BrowserWindow} from 'electron';
+import { app, BrowserWindow } from 'electron';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
-    app.quit();
+  app.quit();
 }
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -11,24 +11,24 @@ let mainWindow;
 
 const createWindow = () => {
     // Create the browser window.
-    mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-    });
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+  });
 
     // and load the index.html of the app.
-    mainWindow.loadURL(`file://${__dirname}/index.html`);
+  mainWindow.loadURL(`file://${__dirname}/index.html`);
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();
 
     // Emitted when the window is closed.
-    mainWindow.on('closed', () => {
+  mainWindow.on('closed', () => {
         // Dereference the window object, usually you would store windows
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
-        mainWindow = null;
-    });
+    mainWindow = null;
+  });
 };
 
 // This method will be called when Electron has finished
@@ -40,36 +40,38 @@ app.on('ready', createWindow);
 app.on('window-all-closed', () => {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (mainWindow === null) {
-        createWindow();
-    }
+  if (mainWindow === null) {
+    createWindow();
+  }
 });
 
 
 const createPyProc = () => {
-    let script = require('path').join(__dirname, '..', '..', 'web', 'pgAdmin4.py');
-    let pyProc = require('child_process').spawn('python', [script]);
+  const pythonPath = require('path').join(__dirname, '..', 'venv', 'bin', 'python');
+  const scriptPath = require('path').join(__dirname, '..', 'web', 'pgAdmin4.py');
+  const pyProc = require('child_process').spawn(pythonPath, [scriptPath]);
 
-    if (pyProc != null) {
-        console.log('child process success')
-    }
+  if (pyProc != null) {
+    console.log('child process success');
+  }
 
-    let outStr, errStr;
-    pyProc.stdout.on('data', (data) => {
-        outStr += data;
-    });
+  let outStr,
+    errStr;
+  pyProc.stdout.on('data', (data) => {
+    outStr += data;
+  });
 
-    pyProc.stderr.on('data', (data) => {
-        errStr += data;
-    });
+  pyProc.stderr.on('data', (data) => {
+    errStr += data;
+  });
 };
 
 app.on('ready', createPyProc);

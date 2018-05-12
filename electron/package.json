@@ -11,7 +11,11 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint src --color"
+    "dist:linux": "electron-forge make --platfrom=linux --arch=x64 --targets=deb",
+    "lint": "eslint src --color",
+    "copy-folder:nix": "cp -r ../web web && find web | grep .pyc$ | xargs -I '{}' rm '{}'",
+    "bundle-app-js": "cd web && rimraf node_modules && yarn install && yarn bundle && rimraf node_modules pgadmin/static/js/generated/.cache",
+    "build:nix": "yarn copy-folder:nix && yarn bundle-app-js"
   },
   "keywords": [],
   "config": {
