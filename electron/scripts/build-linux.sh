@@ -12,17 +12,27 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 curl -sL https://deb.nodesource.com/setup_8.x | bash -
 apt install -y yarn fakeroot
 
+echo "## Copying Electron Folder to the temporary directory..."
 cp -r ${dir}/electron ${tmp_dir}/electron
 
 pushd ${tmp_dir}/electron > /dev/null
+  echo "## Copying pgAdmin folder to the temporary directory..."
   rm -rf web; cp -r ${dir}/web web
+
+  echo "## Creating Virtual Environment..."
   rm -rf venv; mkdir -p venv
   python -m venv --copies ./venv
   source ./venv/bin/activate
   pip install -r ${dir}/requirements.txt
 
+  echo "## Building the Javascript of the application..."
+  pushd web > /dev/null
+    rm -rf node_modules
+    yarn bundle-app-js
+  popd > /dev/null
+
+  echo "## Creating the deb file..."
   yarn install
-  yarn bundle-app-js
   yarn dist:linux
 popd > /dev/null
 
