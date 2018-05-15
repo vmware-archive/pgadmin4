@@ -17,7 +17,9 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // be closed automatically when the JavaScript object is garbage collected.
 let loadingWindow;
 
-const createWindow = () => {
+let pgAdminWindow;
+
+function createLoadingWindow() {
   // Create the browser window.
   loadingWindow = new BrowserWindow({
     width: 800,
@@ -37,12 +39,48 @@ const createWindow = () => {
     // when you should delete the corresponding element.
     loadingWindow = null;
   });
-};
+}
+
+
+function createPGAdminWindow() {
+  pgAdminWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+  });
+
+  pgAdminWindow.loadURL('http://localhost:5050');
+  pgAdminWindow.on('closed', () => {
+    pgAdminWindow = null;
+  });
+
+  electron.globalShortcut.register('CommandOrControl+C', () => {
+    logger.info('CommandOrControl+C is pressed');
+    app.quit();
+    pythonProcess.kill();
+  });
+
+  if (process.platform === 'darwin') {
+    template.unshift({
+      label: app.getName(),
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services', submenu: [] },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideothers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    });
+  }
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', createLoadingWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -62,7 +100,7 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (loadingWindow === null) {
-    createWindow();
+    createLoadingWindow();
   }
 });
 
@@ -73,6 +111,7 @@ const createPyProc = () => {
   pythonProcess = childProcess.spawn(pythonPath, [scriptPath]);
 
   waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(() => {
+    createPGAdminWindow();
     return loadingWindow.hide();
   });
 
