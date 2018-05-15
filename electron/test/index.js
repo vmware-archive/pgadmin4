@@ -1,7 +1,7 @@
 const Application = require('spectron').Application;
 const electron = require('electron');
 const path = require('path');
-const checkPythonServer = require('../src/check_python_server');
+const waitForPythonServerToBeAvailable = require('../src/check_python_server');
 
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -39,8 +39,8 @@ describe('pgAdmin4', () => {
 
   describe('when the server is available', () => {
     it('loading window is no longer present', () => {
-      return checkPythonServer.checkIfPythonServerIsRunning(() => {
-        return app.client.getWindowCount().should.eventually.be.equal(0);
+      return waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(() => {
+        return app.browserWindow.isVisible().should.eventually.be.false;
       });
     }).timeout(40000);
   });
