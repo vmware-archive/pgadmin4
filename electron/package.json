@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "repository": "git.postgresql.com",
   "author": "pgAdmin Hackers",
-  "license": "BSD",
+  "license": "PostgreSQL",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -14,7 +14,8 @@
     "dist:linux": "electron-forge make --platfrom=linux --arch=x64 --targets=deb",
     "lint": "eslint src --color",
     "copy-folder:nix": "cp -r ../web web && find web | grep .pyc$ | xargs -I '{}' rm '{}'",
-    "build:nix": "yarn copy-folder:nix && yarn bundle-app-js"
+    "build:nix": "yarn copy-folder:nix && yarn bundle-app-js",
+    "test": "yarn lint && yarn mocha"
   },
   "keywords": [],
   "config": {
@@ -57,7 +58,8 @@
   },
   "dependencies": {
     "electron-compile": "^6.4.2",
-    "electron-squirrel-startup": "^1.0.0"
+    "electron-squirrel-startup": "^1.0.0",
+    "winston": "^2.4.2"
   },
   "devDependencies": {
     "babel-loader": "^7.1.4",

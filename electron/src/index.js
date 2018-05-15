@@ -1,4 +1,8 @@
 const electron = require('electron');
+const path = require('path');
+const childProcess = require('child_process');
+const logger = require('winston');
+
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 
@@ -57,22 +61,21 @@ app.on('activate', () => {
 
 
 const createPyProc = () => {
-  const pythonPath = require('path').join(__dirname, '..', 'venv', 'bin', 'python');
-  const scriptPath = require('path').join(__dirname, '..', 'web', 'pgAdmin4.py');
-  const pyProc = require('child_process').spawn(pythonPath, [scriptPath]);
+  const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
+  const scriptPath = path.join(__dirname, '..', 'web', 'pgAdmin4.py');
+  logger.info('Spawning...');
+  const pyProc = childProcess.spawn(pythonPath, [scriptPath]);
 
-  if (pyProc != null) {
-    console.log('child process success');
-  }
+  pyProc.on('error', (err) => {
+    logger.error(err.message);
+  });
 
-  let outStr,
-    errStr;
   pyProc.stdout.on('data', (data) => {
-    outStr += data;
+    logger.info(data);
   });
 
   pyProc.stderr.on('data', (data) => {
-    errStr += data;
+    logger.error(data);
   });
 };
 

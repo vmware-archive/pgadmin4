@@ -1,4 +1,8 @@
 {
+  "env": {
+    "node": true,
+    "browser": true
+  },
   "extends": "eslint-config-airbnb",
   "rules": {
     "import/extensions": 0,
