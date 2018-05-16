@@ -821,7 +821,7 @@ babel-plugin-syntax-trailing-function-commas@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-trailing-function-commas/-/babel-plugin-syntax-trailing-function-commas-6.22.0.tgz#ba0360937f8d06e40180a43fe0d5616fff532cf3"
 
-babel-plugin-transform-async-to-generator@^6.1.4, babel-plugin-transform-async-to-generator@^6.22.0, babel-plugin-transform-async-to-generator@^6.24.1, babel-plugin-transform-async-to-generator@^6.8.0:
+babel-plugin-transform-async-to-generator@^6.1.4, babel-plugin-transform-async-to-generator@^6.22.0, babel-plugin-transform-async-to-generator@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-async-to-generator/-/babel-plugin-transform-async-to-generator-6.24.1.tgz#6536e378aff6cb1d5517ac0e40eb3e9fc8d08761"
   dependencies:
@@ -1143,7 +1143,7 @@ babel-preset-flow@^6.23.0:
   dependencies:
     babel-plugin-transform-flow-strip-types "^6.22.0"
 
-babel-preset-react@^6.11.1, babel-preset-react@^6.24.1:
+babel-preset-react@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-preset-react/-/babel-preset-react-6.24.1.tgz#ba69dfaea45fc3ec639b6a4ecea6e17702c91380"
   dependencies:
@@ -1985,7 +1985,7 @@ core-js@^1.0.0:
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
 
-core-js@^2.4.0, core-js@^2.4.1, core-js@^2.5.0:
+core-js@^2.4.0, core-js@^2.5.0:
   version "2.5.6"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.5.6.tgz#0fe6d45bf3cac3ac364a9d72de7576f4eb221b9d"
 
@@ -2785,15 +2785,15 @@ electron-packager@^11.0.0:
     semver "^5.3.0"
     yargs-parser "^9.0.2"
 
-electron-prebuilt-compile@1.8.2:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/electron-prebuilt-compile/-/electron-prebuilt-compile-1.8.2.tgz#e7fc755759e5c638d5a0ac4832effb52e5016c87"
+electron-prebuilt-compile@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/electron-prebuilt-compile/-/electron-prebuilt-compile-2.0.0.tgz#a00ebc8ade4878b72ba2c8160c936ac6eeaba255"
   dependencies:
     babel-plugin-array-includes "^2.0.3"
-    babel-plugin-transform-async-to-generator "^6.8.0"
+    babel-plugin-transform-async-to-generator "^6.24.1"
     babel-preset-es2016-node5 "^1.1.2"
-    babel-preset-react "^6.11.1"
-    electron "1.8.2"
+    babel-preset-react "^6.24.1"
+    electron "2.0.0"
     electron-compile "*"
     electron-compilers "*"
     yargs "^6.6.0"
@@ -2859,9 +2859,9 @@ electron-wix-msi@^1.3.0:
     lodash "^4.17.4"
     uuid "^3.1.0"
 
-electron@1.8.2:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-1.8.2.tgz#a817cd733c2972b3c7cc4f777caf6e424b88014d"
+electron@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-2.0.0.tgz#e95dc7f3a089a52b8c2a52c7c9e1024db0c8d46e"
   dependencies:
     "@types/node" "^8.0.24"
     electron-download "^3.0.1"
@@ -4492,10 +4492,6 @@ isbinaryfile@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/isbinaryfile/-/isbinaryfile-3.0.2.tgz#4a3e974ec0cba9004d3fc6cde7209ea69368a621"
 
-isemail@2.x.x:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/isemail/-/isemail-2.2.1.tgz#0353d3d9a62951080c262c2aa0a42b8ea8e9e2a6"
-
 isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
@@ -4540,10 +4536,6 @@ istanbul@^0.4.5:
     which "^1.1.1"
     wordwrap "^1.0.0"
 
-items@2.x.x:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/items/-/items-2.1.1.tgz#8bd16d9c83b19529de5aea321acaada78364a198"
-
 iterall@^1.0.0:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/iterall/-/iterall-1.2.2.tgz#92d70deb8028e0c39ff3164fdbf4d8b088130cd7"
@@ -4566,16 +4558,6 @@ jade@^1.11.0:
 jmespath@0.15.0:
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/jmespath/-/jmespath-0.15.0.tgz#a3f222a9aae9f966f5d27c796510e28091764217"
-
-joi@^9.2.0:
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/joi/-/joi-9.2.0.tgz#3385ac790192130cbe230e802ec02c9215bbfeda"
-  dependencies:
-    hoek "4.x.x"
-    isemail "2.x.x"
-    items "2.x.x"
-    moment "2.x.x"
-    topo "2.x.x"
 
 js-base64@^2.1.9:
   version "2.4.3"
@@ -5198,10 +5180,6 @@ mocha@^5.1.1:
     minimatch "3.0.4"
     mkdirp "0.5.1"
     supports-color "4.4.0"
-
-moment@2.x.x:
-  version "2.22.1"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.1.tgz#529a2e9bf973f259c9643d237fda84de3a26e8ad"
 
 move-concurrently@^1.0.1:
   version "1.0.1"
@@ -6486,32 +6464,6 @@ request@2.81.0:
     tunnel-agent "^0.6.0"
     uuid "^3.0.0"
 
-request@^2.78.0:
-  version "2.86.0"
-  resolved "https://registry.yarnpkg.com/request/-/request-2.86.0.tgz#2b9497f449b0a32654c081a5cf426bbfb5bf5b69"
-  dependencies:
-    aws-sign2 "~0.7.0"
-    aws4 "^1.6.0"
-    caseless "~0.12.0"
-    combined-stream "~1.0.5"
-    extend "~3.0.1"
-    forever-agent "~0.6.1"
-    form-data "~2.3.1"
-    har-validator "~5.0.3"
-    hawk "~6.0.2"
-    http-signature "~1.2.0"
-    is-typedarray "~1.0.0"
-    isstream "~0.1.2"
-    json-stringify-safe "~5.0.1"
-    mime-types "~2.1.17"
-    oauth-sign "~0.8.2"
-    performance-now "^2.1.0"
-    qs "~6.5.1"
-    safe-buffer "^5.1.1"
-    tough-cookie "~2.3.3"
-    tunnel-agent "^0.6.0"
-    uuid "^3.1.0"
-
 request@~2.83.0:
   version "2.83.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.83.0.tgz#ca0b65da02ed62935887808e6f510381034e3356"
@@ -7447,12 +7399,6 @@ to-regex@^3.0.1, to-regex@^3.0.2:
     regex-not "^1.0.2"
     safe-regex "^1.1.0"
 
-topo@2.x.x:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/topo/-/topo-2.0.2.tgz#cd5615752539057c0dc0491a621c3bc6fbe1d182"
-  dependencies:
-    hoek "4.x.x"
-
 touch@0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/touch/-/touch-0.0.3.tgz#51aef3d449571d4f287a5d87c9c8b49181a0db1d"
@@ -7754,16 +7700,6 @@ vue-template-compiler@^2.0.0-alpha.8:
 vue-template-es2015-compiler@^1.4.2:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.6.0.tgz#dc42697133302ce3017524356a6c61b7b69b4a18"
-
-wait-on@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/wait-on/-/wait-on-2.1.0.tgz#3c4ace1f57266ca5be7fa25e0c15803b889ca46a"
-  dependencies:
-    core-js "^2.4.1"
-    joi "^9.2.0"
-    minimist "^1.2.0"
-    request "^2.78.0"
-    rx "^4.1.0"
 
 watchpack@^1.3.1, watchpack@^1.5.0:
   version "1.6.0"
