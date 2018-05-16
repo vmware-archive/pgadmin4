@@ -1,5 +1,5 @@
 const axios = require('axios');
-const logger = require('winston');
+const { electronLogger } = require('./logger');
 
 function checkIfPythonServerIsAvailable() {
   return axios.get('http://localhost:5050')
@@ -31,8 +31,11 @@ function waitForPythonServerToBeAvailable(functionToExecuteWhenApplicationIsUp) 
       if (isAvailable) {
         return functionToExecuteWhenApplicationIsUp();
       }
-      logger.error('Server not available, waiting.....');
+      electronLogger.error('Server not available, waiting.....');
       return delayedCheckIfServerIsAvailable(functionToExecuteWhenApplicationIsUp);
+    })
+    .catch((error) => {
+      electronLogger.error(`Error waiting for python server availability: ${error}\n ${error.stack}`);
     });
 }
 
