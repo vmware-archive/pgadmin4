@@ -60,7 +60,9 @@
     "axios": "^0.18.0",
     "electron-compile": "^6.4.2",
     "electron-squirrel-startup": "^1.0.0",
-    "winston": "^2.4.2"
+    "logform": "^1.6.0",
+    "wait-on": "^2.1.0",
+    "winston": "^3.0.0-rc5"
   },
   "devDependencies": {
     "babel-loader": "^7.1.4",
@@ -70,7 +72,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "electron-forge": "^5.2.1",
-    "electron-prebuilt-compile": "2.0.0",
+    "electron-prebuilt-compile": "1.8.2",
     "eslint": "^3",
     "eslint-config-airbnb": "^15",
     "eslint-plugin-import": "^2",

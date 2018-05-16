@@ -1,63 +1,163 @@
 const electron = require('electron');
-const path = require('path');
-const childProcess = require('child_process');
-const logger = require('winston');
-const waitForPythonServerToBeAvailable = require('./check_python_server');
+const { globalShortcut } = require('electron');
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
-let pythonProcess;
+const path = require('path');
+const waitForPythonServerToBeAvailable = require('./check_python_server');
+const childProcess = require('child_process');
+const { electronLogger, pythonAppLogger } = require('./logger');
+
+const pythonApplicationUrl = '127.0.0.1:5050';
+
+const allWindows = {};
+
+let pyProc = null;
+let activeWindow = null;
+let loadingWindow = null;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
   app.quit();
 }
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let loadingWindow;
+/** ***********************************************************
+ * window management
+ ************************************************************ */
 
-let pgAdminWindow;
+let mainWindow = null;
 
-function createLoadingWindow() {
-  // Create the browser window.
-  loadingWindow = new BrowserWindow({
+function createNewWindow(url) {
+  const windowId = Math.random()
+    .toString();
+  const webPreferences = {
+    nativeWindowOpen: true,
+
+  };
+
+  let newWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: path.join(__dirname, 'assets/icons/mac/logo-256.png.icns'),
+    webPreferences,
+    show: false,
   });
 
-  // and load the index.html of the app.
-  loadingWindow.loadURL(`file://${__dirname}/index.html`);
+  let urlToLoad = `file://${__dirname}/index.html`;
 
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  if (url !== undefined && url !== null) {
+    urlToLoad = url;
+    if (activeWindow !== null) {
+      newWindow.webContents.session =
+        Object.assign({}, activeWindow.webContents.session);
+    }
+  }
+  newWindow.loadURL(urlToLoad);
 
-  // Emitted when the window is closed.
-  loadingWindow.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    loadingWindow = null;
+  newWindow.on('closed', () => {
+    newWindow = null;
+    delete allWindows[windowId];
   });
+
+  newWindow.on('close', () => {
+    newWindow.hide();
+    delete allWindows[windowId];
+  });
+
+  newWindow.on('focus', () => {
+    activeWindow = newWindow;
+  });
+
+  newWindow.webContents.once('dom-ready', () => {
+    newWindow.show();
+    try {
+      loadingWindow.hide();
+      loadingWindow.close();
+    } catch (exp) {
+      electronLogger.error(`failed to create new window ${exp}`);
+    }
+  });
+
+  activeWindow = newWindow;
+
+  allWindows[windowId] = newWindow;
+
+  return newWindow;
 }
 
+function createMainWindow() {
+  mainWindow = createNewWindow(`http://${pythonApplicationUrl}`);
+  const Menu = electron.Menu;
 
-function createPGAdminWindow() {
-  pgAdminWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-  });
-
-  pgAdminWindow.loadURL('http://localhost:5050');
-  pgAdminWindow.on('closed', () => {
-    pgAdminWindow = null;
-  });
-
-  electron.globalShortcut.register('CommandOrControl+C', () => {
-    logger.info('CommandOrControl+C is pressed');
-    app.quit();
-    pythonProcess.kill();
-  });
+  // Create the Application's main menu
+  const template = [{
+    label: 'PGAdmin4',
+    submenu: [
+      {
+        label: 'New window',
+        accelerator: 'CommandOrControl+N',
+        selector: 'newwindow:',
+        click: () => {
+          createNewWindow();
+        },
+      }, {
+        label: 'New tab',
+        accelerator: 'CommandOrControl+t',
+        selector: 'newtab:',
+        click: () => {
+          activeWindow.webContents.send(
+            'tabs-channel',
+            'create',
+            'pgAdmin4',
+            pythonApplicationUrl,
+          );
+        },
+      },
+      { type: 'separator' },
+      {
+        label: 'About PGAdmin4',
+        selector: 'orderFrontStandardAboutPanel:',
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit',
+        accelerator: 'Command+Q',
+        click() {
+          app.quit();
+        },
+      },
+    ],
+  }, {
+    label: 'Edit',
+    submenu: [
+      { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+      {
+        label: 'Redo',
+        accelerator: 'Shift+CmdOrCtrl+Z',
+        selector: 'redo:',
+      },
+      { type: 'separator' },
+      { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+      { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+      { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+      {
+        label: 'Select All',
+        accelerator: 'CmdOrCtrl+A',
+        selector: 'selectAll:',
+      },
+      { type: 'separator' },
+      {
+        label: 'Dev Tools',
+        accelerator: 'CmdOrCtrl+Alt+I',
+        click: () => {
+          if (activeWindow !== null) {
+            activeWindow.webContents.openDevTools();
+          }
+        },
+      },
+    ],
+  },
+  ];
 
   if (process.platform === 'darwin') {
     template.unshift({
@@ -75,57 +175,88 @@ function createPGAdminWindow() {
       ],
     });
   }
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+
+  globalShortcut.register('CommandOrControl+N', () => {
+    electronLogger.debug('CommandOrControl+N is pressed');
+    createNewWindow(`http://${pythonApplicationUrl}`);
+  });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createLoadingWindow);
 
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-    pythonProcess.kill();
-  }
+app.on('ready', () => {
+  loadingWindow = new BrowserWindow({
+    show: false,
+    frame: false,
+    width: 200,
+    height: 100,
+    icon: `${__dirname}assets/icons/linux/pgAdmin4.png`,
+  });
+
+  loadingWindow.loadURL(`file://${__dirname}/index.html`);
+
+  loadingWindow.show();
 });
 
-app.on('quit', () => {
-  pythonProcess.kill();
+app.on('window-all-closed', () => {
+  electronLogger.debug('perhaps going to close windows');
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (loadingWindow === null) {
-    createLoadingWindow();
+  if (mainWindow === null) {
+    createMainWindow();
   }
 });
 
-const createPyProc = () => {
+function createPyProc() {
   const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
-  const scriptPath = path.join(__dirname, '..', 'web', 'pgAdmin4.py');
-  logger.info('Spawning...');
-  pythonProcess = childProcess.spawn(pythonPath, [scriptPath]);
+  const scriptPath = path.join(__dirname, '..', '..', 'web', 'pgAdmin4.py');
+  electronLogger.info('info: Spawning...');
+  pyProc = childProcess.spawn(pythonPath, [scriptPath]);
 
   waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(() => {
-    createPGAdminWindow();
-    return loadingWindow.hide();
+    electronLogger.debug('debug: Python server is Up, going to start the pgadmin window');
+    createMainWindow();
+    electronLogger.debug('debug: closing the loading window');
   });
 
-  pythonProcess.on('error', (error) => {
-    logger.error(error.message);
+  pyProc.on('error', (error) => {
+    pythonAppLogger.error('error: ', error.message);
   });
 
-  pythonProcess.stdout.on('data', (data) => {
-    logger.info(data);
+  pyProc.stdout.on('data', (data) => {
+    pythonAppLogger.info(`PYTHON: info: ${data}`);
   });
 
-  pythonProcess.stderr.on('data', (data) => {
-    logger.error(data);
+  pyProc.stderr.on('data', (data) => {
+    pythonAppLogger.info(`PYTHON: info: ${data}`);
   });
-};
+}
+
+function exitPyProc() {
+  electronLogger.debug('Going to exit');
+  if (pyProc != null) {
+    pyProc.kill();
+    pyProc = null;
+  } else {
+    app.exit();
+  }
+}
 
 app.on('ready', createPyProc);
+
+app.on('before-quit', () => {
+  electronLogger.debug('before-quit');
+  exitPyProc();
+
+  app.quit();
+});
+
+app.on('quit', () => {
+  electronLogger.debug('quit');
+});
+
