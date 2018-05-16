@@ -21,7 +21,7 @@ const electronLogger = winston.createLogger({
 });
 
 const pythonAppLogger = winston.createLogger({
-  level: 'error',
+  level: 'debug',
   format: format.combine(
     format.label({ label: 'PythonServer' }),
     pythonLogFormat,

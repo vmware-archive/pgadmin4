@@ -225,7 +225,7 @@ function createPyProc() {
   });
 
   pyProc.on('error', (error) => {
-    pythonAppLogger.error('error: ', error.message);
+    pythonAppLogger.error('error: ', error);
   });
 
   pyProc.stdout.on('data', (data) => {
