@@ -1,7 +1,6 @@
 const Application = require('spectron').Application;
 const electron = require('electron');
 const path = require('path');
-const waitForPythonServerToBeAvailable = require('../src/check_python_server');
 
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -10,6 +9,7 @@ chai.should();
 chai.use(chaiAsPromised);
 
 describe('pgAdmin4', () => {
+
   let app;
 
   before(() => {
@@ -28,20 +28,13 @@ describe('pgAdmin4', () => {
     if (app && app.isRunning()) {
       return app.stop();
     }
-
-    return new Promise((resolve) => { return resolve(); });
   });
 
-  it('lets the user know that pgadmin is loading', () => {
-    return app.client.waitUntilWindowLoaded()
-      .getText('body').should.eventually.equal('pgAdmin4 Loading...');
-  });
-
-  describe('when the server is available', () => {
-    it('loading window is no longer present', () => {
-      return waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(() => {
-        return app.browserWindow.isVisible().should.eventually.be.false;
-      });
-    }).timeout(40000);
-  });
+  it('launches pgadmin4 with a loading page', () => {
+    return app.client.getText('body').should.eventually.equal('pgAdmin4 Loading...')
+      .waitUntil(() => {
+        return app.client.windowByIndex(0).isVisible('#dockerContainer')
+      }, 30000)
+      .getText('body').should.eventually.include('Please select an object in the tree view.').and.not.include('pgAdmin4 Loading...')
+  }).timeout(90000);
 });

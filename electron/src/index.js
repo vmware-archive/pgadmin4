@@ -214,7 +214,7 @@ app.on('activate', () => {
 
 function createPyProc() {
   const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
-  const scriptPath = path.join(__dirname, '..', '..', 'web', 'pgAdmin4.py');
+  const scriptPath = path.join(__dirname, '..', 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
   pyProc = childProcess.spawn(pythonPath, [scriptPath]);
 
