@@ -11,7 +11,13 @@ function fastcp() {
   src_folder=$(basename ${src_dir})
   dest_dir=${2}
 
-  tar --exclude=node_modules --exclude=out --exclude='pgadmin/static/js/generated/.cache' -C ${parent_dir} -cf - ${src_folder} | tar -C ${dest_dir} -xf -
+  tar \
+    --exclude=node_modules \
+    --exclude=out \
+    --exclude=venv \
+    --exclude='pgadmin/static/js/generated/.cache' \
+    -C ${parent_dir} \
+    -cf - ${src_folder} | tar -C ${dest_dir} -xf -
 }
 
 apt update
