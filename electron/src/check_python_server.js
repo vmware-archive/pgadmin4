@@ -1,20 +1,20 @@
 const axios = require('axios');
 const { electronLogger } = require('./logger');
 
-function checkIfPythonServerIsAvailable() {
-  return axios.get('http://localhost:5050')
+function checkIfPythonServerIsAvailable(serverAddress) {
+  return axios.get(serverAddress)
     .then(() => {
       return true;
     })
-    .catch(() => {
-      return false;
+    .catch((error) => {
+      return error.response !== undefined;
     });
 }
 
-function delayedCheckIfServerIsAvailable(functionToExecuteWhenApplicationIsUp) {
+function delayedCheckIfServerIsAvailable(serverAddress, functionToExecuteWhenApplicationIsUp) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      waitForPythonServerToBeAvailable(functionToExecuteWhenApplicationIsUp)
+      waitForPythonServerToBeAvailable(serverAddress, functionToExecuteWhenApplicationIsUp)
         .then((result) => {
           resolve(result);
         })
@@ -25,14 +25,14 @@ function delayedCheckIfServerIsAvailable(functionToExecuteWhenApplicationIsUp) {
   });
 }
 
-function waitForPythonServerToBeAvailable(functionToExecuteWhenApplicationIsUp) {
-  return checkIfPythonServerIsAvailable()
+function waitForPythonServerToBeAvailable(serverAddress, functionToExecuteWhenApplicationIsUp) {
+  return checkIfPythonServerIsAvailable(serverAddress)
     .then((isAvailable) => {
       if (isAvailable) {
         return functionToExecuteWhenApplicationIsUp();
       }
       electronLogger.error('Server not available, waiting.....');
-      return delayedCheckIfServerIsAvailable(functionToExecuteWhenApplicationIsUp);
+      return delayedCheckIfServerIsAvailable(serverAddress, functionToExecuteWhenApplicationIsUp);
     })
     .catch((error) => {
       electronLogger.error(`Error waiting for python server availability: ${error}\n ${error.stack}`);

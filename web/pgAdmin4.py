@@ -115,6 +115,9 @@ app.PGADMIN_RUNTIME = PGADMIN_RUNTIME
 if 'PGADMIN_KEY' in globals():
     app.PGADMIN_KEY = globals()['PGADMIN_KEY']
     app.logger.debug("Desktop security key: %s" % app.PGADMIN_KEY)
+elif 'PGADMIN_KEY' in os.environ:
+    app.PGADMIN_KEY = os.environ['PGADMIN_KEY']
+    app.logger.debug("Desktop security key: %s" % app.PGADMIN_KEY)
 else:
     app.PGADMIN_KEY = ''
 

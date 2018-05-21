@@ -1,5 +1,6 @@
 const electron = require('electron');
 const { globalShortcut } = require('electron');
+const crypto = require('crypto');
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -8,7 +9,9 @@ const waitForPythonServerToBeAvailable = require('./check_python_server');
 const childProcess = require('child_process');
 const { electronLogger, pythonAppLogger } = require('./logger');
 
-const pythonApplicationUrl = '127.0.0.1:5050';
+const pythonApplicationPort = 3456;
+const secret = crypto.randomBytes(12).toString('hex');
+const pythonApplicationUrl = `http://127.0.0.1:${pythonApplicationPort}?key=${secret}`;
 
 const allWindows = {};
 
@@ -86,7 +89,7 @@ function createNewWindow(url) {
 }
 
 function createMainWindow() {
-  mainWindow = createNewWindow(`http://${pythonApplicationUrl}`);
+  mainWindow = createNewWindow(pythonApplicationUrl);
   const Menu = electron.Menu;
 
   // Create the Application's main menu
@@ -216,9 +219,15 @@ function createPyProc() {
   const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
   const scriptPath = path.join(__dirname, '..', 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
-  pyProc = childProcess.spawn(pythonPath, [scriptPath]);
+  pyProc = childProcess.spawn(pythonPath, [scriptPath], {
+    env: {
+      PGADMIN_PORT: pythonApplicationPort,
+      PGADMIN_KEY: secret,
+      SERVER_MODE: false,
+    },
+  });
 
-  waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(() => {
+  waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(pythonApplicationUrl, () => {
     electronLogger.debug('debug: Python server is Up, going to start the pgadmin window');
     createMainWindow();
     electronLogger.debug('debug: closing the loading window');
