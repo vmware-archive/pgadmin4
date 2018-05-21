@@ -7,7 +7,7 @@
   "author": "pgAdmin Hackers",
   "license": "PostgreSQL",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "cross-env ENV=DEV electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "cross-env": "^5.1.5",
     "electron-compile": "^6.4.2",
     "electron-squirrel-startup": "^1.0.0",
     "logform": "^1.6.0",

@@ -12,6 +12,7 @@ const { electronLogger, pythonAppLogger } = require('./logger');
 const pythonApplicationPort = 3456;
 const secret = crypto.randomBytes(12).toString('hex');
 const pythonApplicationUrl = `http://127.0.0.1:${pythonApplicationPort}?key=${secret}`;
+const session = electron.session;
 
 const allWindows = {};
 
@@ -50,20 +51,12 @@ function createNewWindow(url) {
 
   if (url !== undefined && url !== null) {
     urlToLoad = url;
-    if (activeWindow !== null) {
-      newWindow.webContents.session =
-        Object.assign({}, activeWindow.webContents.session);
-    }
   }
   newWindow.loadURL(urlToLoad);
 
   newWindow.on('closed', () => {
+    electronLogger.debug(`window: ${urlToLoad} just closed`);
     newWindow = null;
-    delete allWindows[windowId];
-  });
-
-  newWindow.on('close', () => {
-    newWindow.hide();
     delete allWindows[windowId];
   });
 
@@ -101,7 +94,7 @@ function createMainWindow() {
         accelerator: 'CommandOrControl+N',
         selector: 'newwindow:',
         click: () => {
-          createNewWindow();
+          createNewWindow(pythonApplicationUrl);
         },
       }, {
         label: 'New tab',
@@ -189,6 +182,10 @@ function createMainWindow() {
 
 
 app.on('ready', () => {
+  if (process.env.ENV === 'DEV') {
+    session.defaultSession.clearCache(() => {}) ;
+  }
+
   loadingWindow = new BrowserWindow({
     show: false,
     frame: false,
@@ -204,6 +201,7 @@ app.on('ready', () => {
 
 app.on('window-all-closed', () => {
   electronLogger.debug('perhaps going to close windows');
+  globalShortcut.unregisterAll();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -268,4 +266,3 @@ app.on('before-quit', () => {
 app.on('quit', () => {
   electronLogger.debug('quit');
 });
-
