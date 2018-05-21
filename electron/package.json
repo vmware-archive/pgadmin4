@@ -1,6 +1,6 @@
 {
   "name": "pgAdmin",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "some description",
   "main": "src/index.js",
   "repository": "git.postgresql.com",
