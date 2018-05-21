@@ -5,6 +5,15 @@ set -e
 dir=$(cd `dirname $0` && cd .. && cd .. && pwd)
 tmp_dir=$(mktemp -d)
 
+function fastcp() {
+  src_dir=${1}
+  parent_dir=$(dirname ${src_dir})
+  src_folder=$(basename ${src_dir})
+  dest_dir=${2}
+
+  tar --exclude=node_modules --exclude=out --exclude='pgadmin/static/js/generated/.cache' -C ${parent_dir} -cf - ${src_folder} | tar -C ${dest_dir} -xf -
+}
+
 apt update
 apt install -y apt-transport-https
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -13,11 +22,11 @@ curl -sL https://deb.nodesource.com/setup_8.x | bash -
 apt install -y yarn fakeroot
 
 echo "## Copying Electron Folder to the temporary directory..."
-cp -r ${dir}/electron ${tmp_dir}/electron
+fastcp ${dir}/electron ${tmp_dir}
 
 pushd ${tmp_dir}/electron > /dev/null
   echo "## Copying pgAdmin folder to the temporary directory..."
-  rm -rf web; cp -r ${dir}/web web
+  rm -rf web; fastcp ${dir}/web ${tmp_dir}/electron
 
   echo "## Creating Virtual Environment..."
   rm -rf venv; mkdir -p venv
