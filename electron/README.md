@@ -52,3 +52,14 @@
 ```bash
 $ ./electron/scripts/build-darwin.sh
 ```
+
+### Windows
+
+#### Pre requirements
+* Python 2.7 installed(with virtual env and pip) 
+* [Compilation with MSVC for Python](https://www.microsoft.com/en-gb/download/details.aspx?id=44266)
+
+
+#### Installation steps
+
+Open powershell and run the script in `.\electron\scripts\build-windows.sh`
