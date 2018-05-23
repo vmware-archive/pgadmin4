@@ -23,3 +23,32 @@
    ```
 
    The linux distributable will be found in the `out/make` directory of the previous electron folder.
+
+### Mac
+
+#### Pre requirements
+* [HomeBrew](https://brew.sh/)
+
+#### Steps
+1. Install git
+`brew install git`
+1. Install python environment
+    ```bash
+    $ brew install pyenv sqlite3
+    $ pyenv init
+    $ eval "$(pyenv init -)"
+    $ git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+    $ eval "$(pyenv init -)"
+    $ pyenv install 3.6.5
+    $ pyenv virtualenv 3.6.5 python36
+    $ pyenv activate python36
+    $ mkdir workspace && cd workspace
+    $ git clone https://github.com/greenplum-db/pgadmin4.git
+    $ brew install node@8
+    $ brew install yarn --without-node
+    $ git checkout electron
+    ```
+1. Compile the application using the following command
+```bash
+$ ./electron/scripts/build-darwin.sh
+```
