@@ -1,23 +1,25 @@
 {
   "name": "pgAdmin",
   "version": "4.0.4+dev",
-  "description": "some description",
+  "description": "pgAdmin is the most popular and feature rich Open Source administration and development platform for PostgreSQL, the most advanced Open Source database in the world.",
   "main": "src/index.js",
   "repository": "git.postgresql.com",
   "author": "pgAdmin Hackers",
   "license": "PostgreSQL",
   "scripts": {
-    "start": "cross-env ENV=DEV electron-forge start",
+    "start": "electron-forge start",
+    "start:dev": "cross-env ENV=DEV electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "dist:linux": "electron-forge make --platfrom=linux --arch=x64 --targets=deb",
+    "dist:darwin": "electron-forge make --platfrom=darwin --arch=x64 --targets=dmg",
     "lint": "eslint src test --color",
     "copy-folder:nix": "cp -r ../web web && find web | grep .pyc$ | xargs -I '{}' rm '{}'",
     "build:nix": "yarn copy-folder:nix && yarn bundle-app-js",
     "test": "yarn lint && yarn mocha"
   },
-  "keywords": [],
+  "keywords": ["pgadmin", "pgadmin4", "postgres", "sqleditor", "sql", "query", "database"],
   "config": {
     "forge": {
       "make_targets": {
@@ -25,7 +27,7 @@
           "squirrel"
         ],
         "darwin": [
-          "zip"
+          "dmg"
         ],
         "linux": [
           "deb"
@@ -53,6 +55,11 @@
       "windowsStoreConfig": {
         "packageName": "",
         "name": "electron"
+      },
+      "electronInstallerDMG": {
+        "background": "assets/icons/linux/pgAdmin4.png",
+        "icon": "assets/icons/darwin/pgAdmin4.icns",
+        "format": "ULFO"
       }
     }
   },
