@@ -2,6 +2,18 @@
 
 ### Prerequisites
 * [Docker](https://www.docker.com/)
+* [Python Virtual Environment](https://docs.python.org/3/library/venv.html) for python < 3.3
+
+### Create the virtual environment 
+1. `cd` into the electron folder of the project
+1. Execute the following command to create the distributable version of Python
+    ```bash
+    $ python -m venv --copies venv
+    ```
+1. Install all packages needed by the application
+    ```bash
+    $ venv/bin/pip install -r ../requirements.txt
+    ```
 
 ### Linux
 1. `cd` into the root directory of the project.
