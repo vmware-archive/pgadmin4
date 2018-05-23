@@ -214,14 +214,20 @@ app.on('activate', () => {
 });
 
 function createPyProc() {
+  let useServerMode = false;
+  let sourceFolder = '..';
+  if(process.env.ENV === 'DEV') {
+    sourceFolder = path.join('..', '..');
+    useServerMode = true;
+  }
   const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
-  const scriptPath = path.join(__dirname, '..', 'web', 'pgAdmin4.py');
+  const scriptPath = path.join(__dirname, sourceFolder, 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
   pyProc = childProcess.spawn(pythonPath, [scriptPath], {
     env: {
       PGADMIN_PORT: pythonApplicationPort,
       PGADMIN_KEY: secret,
-      SERVER_MODE: false,
+      SERVER_MODE: useServerMode,
     },
   });
 
