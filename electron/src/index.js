@@ -214,11 +214,9 @@ app.on('activate', () => {
 });
 
 function createPyProc() {
-  let useServerMode = false;
   let sourceFolder = '..';
   if(process.env.ENV === 'DEV') {
     sourceFolder = path.join('..', '..');
-    useServerMode = true;
   }
   const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
   const scriptPath = path.join(__dirname, sourceFolder, 'web', 'pgAdmin4.py');
@@ -227,7 +225,6 @@ function createPyProc() {
     env: {
       PGADMIN_PORT: pythonApplicationPort,
       PGADMIN_KEY: secret,
-      SERVER_MODE: useServerMode,
     },
   });
 

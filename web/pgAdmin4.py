@@ -28,8 +28,6 @@ if sys.path[0] != root:
 # Grab the SERVER_MODE if it's been set by the runtime
 if 'SERVER_MODE' in globals():
     builtins.SERVER_MODE = globals()['SERVER_MODE']
-elif 'SERVER_MODE' in os.environ:
-    builtins.SERVER_MODE = os.environ['SERVER_MODE']
 else:
     builtins.SERVER_MODE = None
 
