@@ -4,34 +4,41 @@ function New-TemporaryDirectory {
     New-Item -ItemType Directory -Path (Join-Path $parent $name)
 }
 
-$dir  = "C:\Users\IEUser\workspace\pgadmin4\"
-$tempdir = New-TemporaryDirectory
+$dir  = pwd
+$full_folder_tempdir = New-TemporaryDirectory
+$tempdir = "P:"
+subst $tempdir $full_folder_tempdir
 cd $tempdir
 
 echo "## Copying Electron Folder to the temporary directory..."
-cp -r C:\Users\IEUser\workspace\pgadmin4\electron .
+cp -Recurse -force $dir\electron .
 
 pushd .\electron > $null
-echo "## Copying pgAdmin folder to the temporary directory..."
-rm -r web
-cp -r $dir\web .
+    echo "## Copying pgAdmin folder to the temporary directory..."
+    rm -erroraction 'silentlycontinue' web
+    cp -Recurse -force $dir\web .
 
-echo "## Creating Virtual Environment..."
-rm -r venv
-mkdir -p venv > $null
-virtualenv.exe venv
-. .\venv\Scripts\activate
-pip install -r $dir\requirements.txt
+    echo "## Creating Virtual Environment..."
+    rm -erroraction 'silentlycontinue' venv
+    mkdir -p venv > $null
+    virtualenv.exe venv
+    . .\venv\Scripts\activate
+    python -m pip install -r $dir\requirements.txt
 
 
-echo "## Compiling web folder"
-pushd web
- rm node_modules
- yarn bundle-app-js
+    echo "## Compiling web folder"
+    pushd web
+     rm -erroraction 'silentlycontinue' node_modules
+     yarn bundle-app-js
+    popd
+    yarn install
+    yarn dist:windows
 popd
-yarn install
-yarn dist:windows
 
-rm ${dir}/electron/out/make/*.msi
+rm ${dir}/electron/out/make/*.exe
 mkdir -p ${dir}/electron/out/make
-mv ${tmp_dir}/electron/out/make/*.msi ${dir}/electron/out/make
+mv ${tempdir}/electron/out/make/squirrel.windows/x64/*.exe ${dir}/electron/out/make
+
+cd $dir
+
+subst $tempdir /D
