@@ -36,7 +36,7 @@ pushd .\electron > $null
 popd
 
 rm ${dir}/electron/out/make/*.exe
-mkdir -p ${dir}/electron/out/make
+mkdir ${dir}/electron/out/make
 mv ${tempdir}/electron/out/make/squirrel.windows/x64/*.exe ${dir}/electron/out/make
 
 cd $dir

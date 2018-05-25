@@ -48,7 +48,8 @@
       },
       "electronWinstallerConfig": {
         "name": "pgAdmin4",
-        "setupIcon": "assets/icons/windows/pgAdmin4.ico"
+        "setupIcon": "assets/icons/windows/pgAdmin4.ico",
+        "iconUrl": "assets/icons/windows/pgAdmin4.ico"
       },
       "electronInstallerDebian": {
         "icon": "assets/icons/linux/pgAdmin4.png",

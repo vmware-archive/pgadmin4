@@ -183,7 +183,8 @@ function createMainWindow() {
 
 app.on('ready', () => {
   if (process.env.ENV === 'DEV') {
-    session.defaultSession.clearCache(() => {}) ;
+    session.defaultSession.clearCache(() => {
+    });
   }
 
   loadingWindow = new BrowserWindow({
@@ -216,11 +217,11 @@ app.on('activate', () => {
 function createPyProc() {
   let useServerMode = false;
   let sourceFolder = '..';
-  if(process.env.ENV === 'DEV') {
+  if (process.env.ENV === 'DEV') {
     sourceFolder = path.join('..', '..');
     useServerMode = true;
   }
-  const pythonPath = path.join(__dirname, '..', 'venv', 'bin', 'python');
+  const pythonPath = calculatePythonExecutablePath();
   const scriptPath = path.join(__dirname, sourceFolder, 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
   pyProc = childProcess.spawn(pythonPath, [scriptPath], {
@@ -248,6 +249,13 @@ function createPyProc() {
   pyProc.stderr.on('data', (data) => {
     pythonAppLogger.info(`PYTHON: info: ${data}`);
   });
+}
+
+function calculatePythonExecutablePath() {
+  if (process.platform === 'win32') {
+    return path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe');
+  }
+  return path.join(__dirname, '..', 'venv', 'bin', 'python');
 }
 
 function exitPyProc() {
