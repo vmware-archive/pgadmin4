@@ -9,7 +9,6 @@ chai.should();
 chai.use(chaiAsPromised);
 
 describe('pgAdmin4', () => {
-
   let app;
 
   before(() => {
@@ -33,8 +32,8 @@ describe('pgAdmin4', () => {
   it('launches pgadmin4 with a loading page', () => {
     return app.client.getText('body').should.eventually.equal('pgAdmin4 Loading...')
       .waitUntil(() => {
-        return app.client.windowByIndex(0).isVisible('#dockerContainer')
+        return app.client.windowByIndex(0).isVisible('#dockerContainer');
       }, 30000)
-      .getText('body').should.eventually.include('Please select an object in the tree view.').and.not.include('pgAdmin4 Loading...')
+      .getText('body').should.eventually.include('Please select an object in the tree view.').and.not.include('pgAdmin4 Loading...');
   }).timeout(90000);
 });
