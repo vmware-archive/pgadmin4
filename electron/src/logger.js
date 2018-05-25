@@ -17,6 +17,7 @@ const electronLogger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
+    new winston.transports.File({ filename: 'electron.log'}),
   ],
 });
 
@@ -28,6 +29,7 @@ const pythonAppLogger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
+    new winston.transports.File({ filename: 'pgadmin.log'}),
   ],
 });
 
