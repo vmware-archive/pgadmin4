@@ -3,4 +3,4 @@ out
 yarn-error.log
 venv
 web
-node.*.log
+*.log
