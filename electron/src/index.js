@@ -224,13 +224,12 @@ function createPyProc() {
   const pythonPath = calculatePythonExecutablePath();
   const scriptPath = path.join(__dirname, sourceFolder, 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
-  pyProc = childProcess.spawn(pythonPath, [scriptPath], {
-    env: {
-      PGADMIN_PORT: pythonApplicationPort,
-      PGADMIN_KEY: secret,
-      SERVER_MODE: useServerMode,
-    },
-  });
+  let env = Object.create(process. env);
+  env.PGADMIN_PORT = pythonApplicationPort;
+  env.PGADMIN_KEY = secret;
+  env.SERVER_MODE = useServerMode;
+
+  pyProc = childProcess.spawn(pythonPath, [scriptPath], { env: env });
 
   waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(pythonApplicationUrl, () => {
     electronLogger.debug('debug: Python server is Up, going to start the pgadmin window');
