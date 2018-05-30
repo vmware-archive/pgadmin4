@@ -20,12 +20,12 @@ function fastcp() {
     -cf - ${src_folder} | tar -C ${dest_dir} -xf -
 }
 
-apt update
-apt install -y apt-transport-https
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-curl -sL https://deb.nodesource.com/setup_8.x | bash -
-apt install -y yarn fakeroot
+# apt update
+# apt install -y apt-transport-https
+# curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+# echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+# curl -sL https://deb.nodesource.com/setup_8.x | bash -
+# apt install -y yarn fakeroot rpm
 
 echo "## Copying Electron Folder to the temporary directory..."
 fastcp ${dir}/electron ${tmp_dir}
@@ -36,7 +36,8 @@ pushd ${tmp_dir}/electron > /dev/null
 
   echo "## Creating Virtual Environment..."
   rm -rf venv; mkdir -p venv
-  python -m venv --copies ./venv
+  pip install virtualenv
+  python -m virtualenv --always-copy ./venv
   source ./venv/bin/activate
   pip install -r ${dir}/requirements.txt
 
@@ -51,6 +52,6 @@ pushd ${tmp_dir}/electron > /dev/null
   yarn dist:linux
 popd > /dev/null
 
-rm -f ${dir}/electron/out/make/*.deb
+rm -f ${dir}/electron/out/make/*.rpm
 mkdir -p ${dir}/electron/out/make
-mv ${tmp_dir}/electron/out/make/*.deb ${dir}/electron/out/make
+mv ${tmp_dir}/electron/out/make/*.rpm ${dir}/electron/out/make
