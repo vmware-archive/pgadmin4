@@ -116,10 +116,13 @@ NODE_BLACKLIST = []
 #       from it, notably various paths such as LOG_FILE and anything
 #       using DATA_DIR.
 
-if builtins.SERVER_MODE is None:
+try:
+    if builtins.SERVER_MODE is None:
+        SERVER_MODE = True
+    else:
+        SERVER_MODE = builtins.SERVER_MODE
+except AttributeError:
     SERVER_MODE = True
-else:
-    SERVER_MODE = builtins.SERVER_MODE
 
 # User ID (email address) to use for the default user in desktop mode.
 # The default should be fine here, as it's not exposed in the app.

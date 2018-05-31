@@ -10,66 +10,76 @@
 import os
 import sys
 
-from regression.python_test_utils.template_helper import file_as_template
-from regression.python_test_utils.sql_template_test_base import \
-    SQLTemplateTestBase
+import pytest
+from grappa import should
 
+from regression.python_test_utils import test_utils
+from regression.python_test_utils.template_helper import file_as_template
 
 if sys.version_info[0] >= 3:
     long = int
 
 
-class TestTablesPropertiesSql(SQLTemplateTestBase):
-    scenarios = [
-        ("This scenario tests that all applicable sql template versions can "
-         "fetch some ddl", dict())
-    ]
+@pytest.mark.database
+class TestTablesPropertiesSql:
+    def test_table_properties_sql(self, context_of_tests):
+        """
+        When all parameters are present
+        It correctly generates the SQL
+        And executes against the database
+        """
+        server = context_of_tests['server']
+        with test_utils.Database(server) as (connection, database_name):
+            test_utils.create_table(server, database_name, 'test_table')
 
-    def __init__(self):
-        super(TestTablesPropertiesSql, self).__init__()
-        self.database_id = -1
-        self.last_system_oid = -1
-        self.table_id = -1
+            if connection.server_version < 90100:
+                versions_to_test = ['default']
+            else:
+                versions_to_test = ['9.1_plus']
 
-    def assertions(self, fetch_result, descriptions):
+            cursor = connection.cursor()
+            cursor.execute(u"""
+                SELECT
+                    db.oid as did, datlastsysoid
+                FROM
+                    pg_database db
+                WHERE db.datname = '{0}'""".format(database_name)
+                           )
+            database_id, last_system_oid = cursor.fetchone()
 
-        first_row = {}
-        for index, description in enumerate(descriptions):
-            first_row[description.name] = fetch_result[0][index]
+            cursor.execute(
+                'SELECT oid FROM pg_class where relname=\'test_table\'')
+            table_id = cursor.fetchone()[0]
 
-        self.assertEqual('test_table', first_row['name'])
-        # triggercount is sometimes returned as a string for some reason
-        self.assertEqual(0, long(first_row['triggercount']))
-        self.assertEqual(None, first_row['typname'])
-        self.assertEqual([], first_row['coll_inherits'])
+            for version in versions_to_test:
+                template_file = \
+                    self.get_template_file(version, 'properties.sql')
+                template = file_as_template(template_file)
+                public_schema_id = 2200
+                sql = template.render(scid=public_schema_id,
+                                      did=database_id,
+                                      datlastsysoid=last_system_oid,
+                                      tid=table_id
+                                      )
 
-    def generate_sql(self, version):
-        template_file = self.get_template_file(version, "properties.sql")
-        template = file_as_template(template_file)
-        public_schema_id = 2200
-        sql = template.render(scid=public_schema_id,
-                              did=self.database_id,
-                              datlastsysoid=self.last_system_oid,
-                              tid=self.table_id
-                              )
-        return sql
+                cursor = connection.cursor()
+                cursor.execute(sql)
+                fetch_result = cursor.fetchall()
 
-    def test_setup(self, connection, cursor):
-        cursor.execute(u"""
-            SELECT
-                db.oid as did, datlastsysoid
-            FROM
-                pg_database db
-            WHERE db.datname = '{0}'""".format(self.database_name)
-                       )
-        self.database_id, self.last_system_oid = cursor.fetchone()
+                first_row = {}
+                for index, description in enumerate(cursor.description):
+                    first_row[description.name] = fetch_result[0][index]
 
-        cursor.execute("SELECT oid FROM pg_class where relname='test_table'")
-        self.table_id = cursor.fetchone()[0]
+                first_row['name'] | should.be.equal.to('test_table')
+                # triggercount is sometimes returned as a
+                # string for some reason
+                long(first_row['triggercount']) | should.be.equal.to(0)
+                first_row['typname'] | should.be.none
+                first_row['coll_inherits'] | should.be.empty
 
     @staticmethod
     def get_template_file(version, filename):
         return os.path.join(
-            os.path.dirname(__file__), "..", "templates", "table", "sql",
+            os.path.dirname(__file__), '..', 'templates', 'table', 'sql',
             version, filename
         )

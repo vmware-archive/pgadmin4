@@ -9,61 +9,76 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tables.tests \
     import utils as tables_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
-from pgadmin.browser.server_groups.servers.databases.tests import utils as \
-    database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression.python_test_utils import test_utils as utils
 from . import utils as rules_utils
 
 
-class RulesGetTestCase(BaseTestGenerator):
-    """This class will fetch the rule under table node."""
-    scenarios = [
-        ('Fetch rule Node URL', dict(url='/browser/rule/obj/'))
-    ]
+class TestRulesGet:
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_rule_get(self, context_of_tests):
+        """
+        When the rule GET request is send to the backend
+        it returns 200 status
+        """
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
 
-    def setUp(self):
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 self.server_id, self.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to delete rule.")
-        self.schema_id = schema_info["schema_id"]
-        self.schema_name = schema_info["schema_name"]
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      self.db_name,
-                                                      self.schema_name)
+        db_name = server_data['db_name']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        schema_id = server_data['schema_id']
+        schema_name = server_data['schema_name']
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
-            raise Exception("Could not find the schema to delete rule.")
-        self.table_name = "table_column_%s" % (str(uuid.uuid4())[1:8])
-        self.table_id = tables_utils.create_table(self.server, self.db_name,
-                                                  self.schema_name,
-                                                  self.table_name)
-        self.rule_name = "test_rule_delete_%s" % (str(uuid.uuid4())[1:8])
-        self.rule_id = rules_utils.create_rule(self.server, self.db_name,
-                                               self.schema_name,
-                                               self.table_name,
-                                               self.rule_name)
+            raise Exception('Could not find the schema to delete rule.')
 
-    def runTest(self):
-        """This function will fetch the rule under table node."""
-        response = self.tester.get(
-            "{0}{1}/{2}/{3}/{4}/{5}/{6}".format(self.url, utils.SERVER_GROUP,
-                                                self.server_id, self.db_id,
-                                                self.schema_id, self.table_id,
-                                                self.rule_id),
+        table_name = 'table_column_%s' % (str(uuid.uuid4())[1:8])
+        table_id = tables_utils.create_table(server,
+                                             db_name,
+                                             schema_name,
+                                             table_name)
+        rule_name = 'test_rule_get_%s' % (str(uuid.uuid4())[1:8])
+        rule_id = rules_utils.create_rule(server,
+                                          db_name,
+                                          schema_name,
+                                          table_name,
+                                          rule_name)
+
+        url = '/browser/rule/obj/'
+        response = http_client.get(
+            '{0}{1}/{2}/{3}/{4}/{5}/{6}'.format(url, utils.SERVER_GROUP,
+                                                server_id, db_id,
+                                                schema_id, table_id,
+                                                rule_id),
             follow_redirects=True
         )
-        self.assertEquals(response.status_code, 200)
 
-    def tearDown(self):
-        # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('comment') > should.be.none
+        json_response | should.have.key('definition')
+        json_response | should.have.key('statements') > should.be.equal.to(
+            'NOTHING;')
+        json_response | should.have.key('name') > should.be.equal.to(rule_name)
+        json_response | should.have.key('parentistable') > should.be.true
+        json_response | should.have.key('do_instead') > should.be.false
+        json_response | should.have.key('oid')
+        json_response | should.have.key('enabled') > should.be.true
+        json_response | should.have.key('system_rule') > should.be.false
+        json_response | should.have.key('view') > should.be.equal.to(
+            table_name)
+        json_response | should.have.key('event') > should.be.equal.to('Update')
+        json_response | should.have.key('condition') > should.be.equal.to('')
+        json_response | should.have.key('schema') > should.be.equal.to(
+            schema_name)

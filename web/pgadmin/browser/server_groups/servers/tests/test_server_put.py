@@ -9,35 +9,43 @@
 
 import json
 
-from pgadmin.utils.route import BaseTestGenerator
+from grappa import should
+
 from regression.python_test_utils import test_utils as utils
 
 
-class ServerUpdateTestCase(BaseTestGenerator):
-    """ This class will update server's comment field. """
+class TestServersPut:
+    def test_server_put(self, request, context_of_tests):
+        """
+        When sending put request to server url
+        It returns 200 status code
+        """
 
-    scenarios = [
-        # Fetching the default url for server node
-        ('Default Server Node url', dict(url='/browser/server/obj/'))
-    ]
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        """This function add the server to test the PUT API"""
-        self.server_id = utils.create_server(self.server)
+        url = '/browser/server/obj/'
+        server = context_of_tests['server']
+        self.server_id = utils.create_server(server)
+        if not self.server_id:
+            raise Exception("Server not found to test GET API")
+
+        self.tester = context_of_tests['test_client']
         server_dict = {"server_id": self.server_id}
         utils.write_node_info("sid", server_dict)
 
-    def runTest(self):
-        """This function update the server details"""
-        if not self.server_id:
-            raise Exception("No server to update.")
-        data = {"comment": self.server['comment'], "id": self.server_id}
-        put_response = self.tester.put(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(self.server_id), data=json.dumps(data),
-            content_type='html/json')
-        self.assertEquals(put_response.status_code, 200)
+        data = {
+            "comment": server['comment'],
+            "id": self.server_id
+        }
+
+        response = self.tester.put(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id),
+            data=json.dumps(data),
+            content_type='html/json'
+        )
+
+        response.status_code | should.be.equal.to(200)
 
     def tearDown(self):
-        """This function delete the server from SQLite"""
         utils.delete_server_with_api(self.tester, self.server_id)

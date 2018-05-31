@@ -10,72 +10,67 @@
 import json
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.functions.tests \
     import utils as trigger_funcs_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tables.tests \
     import utils as tables_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
-from pgadmin.browser.server_groups.servers.databases.tests import utils as \
-    database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 
 
-class TriggersAddTestCase(BaseTestGenerator):
-    """This class will add new trigger under table node."""
-    skip_on_database = ['gpdb']
-    scenarios = [
-        ('Add trigger Node URL', dict(url='/browser/trigger/obj/'))
-    ]
+@pytest.mark.skip_databases(['gpdb'])
+class TestTriggersAdd:
 
-    def setUp(self):
-        super(TriggersAddTestCase, self).setUp()
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 self.server_id, self.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to add a trigger.")
-        self.schema_id = schema_info["schema_id"]
-        self.schema_name = schema_info["schema_name"]
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      self.db_name,
-                                                      self.schema_name)
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_trigger_add(self, context_of_tests):
+        """
+        When sending post request to add trigger
+        it returns 200 status
+        """
+
+        url = '/browser/trigger/obj/'
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
+
+        db_name = server_data['db_name']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        schema_id = server_data['schema_id']
+        schema_name = server_data['schema_name']
+
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
             raise Exception("Could not find the schema to add a trigger.")
-        self.table_name = "table_trigger_%s" % (str(uuid.uuid4())[1:8])
-        self.table_id = tables_utils.create_table(self.server, self.db_name,
-                                                  self.schema_name,
-                                                  self.table_name)
-        self.func_name = "trigger_func_add_%s" % str(uuid.uuid4())[1:8]
-        self.function_info = \
-            trigger_funcs_utils.create_trigger_function_with_trigger(
-                self.server, self.db_name, self.schema_name, self.func_name)
+        table_name = "table_trigger_%s" % (str(uuid.uuid4())[1:8])
+        table_id = tables_utils.create_table(server, db_name,
+                                             schema_name,
+                                             table_name)
+        func_name = "trigger_func_add_%s" % str(uuid.uuid4())[1:8]
+        trigger_funcs_utils.create_trigger_function_with_trigger(
+            server, db_name, schema_name, func_name)
 
-    def runTest(self):
-        """This function will trigger under table node."""
         trigger_name = "test_trigger_add_%s" % (str(uuid.uuid4())[1:8])
         data = {"name": trigger_name,
                 "is_row_trigger": True,
                 "fires": "BEFORE",
                 "columns": [],
-                "tfunction": "{0}.{1}".format(self.schema_name,
-                                              self.func_name),
+                "tfunction": "{0}.{1}".format(schema_name,
+                                              func_name),
                 "evnt_insert": True
                 }
-        response = self.tester.post(
-            "{0}{1}/{2}/{3}/{4}/{5}/".format(self.url, utils.SERVER_GROUP,
-                                             self.server_id, self.db_id,
-                                             self.schema_id, self.table_id),
+        response = http_client.post(
+            "{0}{1}/{2}/{3}/{4}/{5}/".format(url, utils.SERVER_GROUP,
+                                             server_id, db_id,
+                                             schema_id, table_id),
             data=json.dumps(data),
             content_type='html/json'
         )
-        self.assertEquals(response.status_code, 200)
 
-    def tearDown(self):
-        # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        response.status_code | should.equal(200)

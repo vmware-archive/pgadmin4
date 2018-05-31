@@ -11,25 +11,21 @@ from __future__ import print_function
 
 import json
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.tests_helper import ClientTestBaseClass
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as cast_utils
 
 
-class CastsPutTestCase(BaseTestGenerator):
-    """ This class will fetch the cast node added under database node. """
-    skip_on_database = ['gpdb']
-    scenarios = [
-        # Fetching default URL for cast node.
-        ('Check Cast Node', dict(url='/browser/cast/obj/'))
-    ]
-
-    def setUp(self):
-        """ This function will create cast."""
-        super(CastsPutTestCase, self).setUp()
+@pytest.mark.skip_databases(['gpdb'])
+class TestCastsPut(ClientTestBaseClass):
+    @pytest.fixture(autouse=True)
+    def setUp(self, the_real_setup):
         self.default_db = self.server["db"]
         self.database_info = parent_node_dict['database'][-1]
         self.db_name = self.database_info['db_name']
@@ -39,8 +35,12 @@ class CastsPutTestCase(BaseTestGenerator):
         self.cast_id = cast_utils.create_cast(self.server, self.source_type,
                                               self.target_type)
 
-    def runTest(self):
-        """ This function will update added cast."""
+    def test_put(self):
+        """When a cast exits
+         When updating the cast,
+         It gets updates the cast in the database
+          And return 200 status"""
+        url = '/browser/cast/obj/'
         self.server_id = self.database_info["server_id"]
         self.db_id = self.database_info['db_id']
         db_con = database_utils.connect_database(self,
@@ -63,13 +63,21 @@ class CastsPutTestCase(BaseTestGenerator):
             "id": self.cast_id
         }
         put_response = self.tester.put(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(
                 self.db_id) +
             '/' + str(self.cast_id),
             data=json.dumps(data),
             follow_redirects=True)
-        self.assertEquals(put_response.status_code, 200)
+        put_response.status_code | should.be.equal.to(200)
+
+        json_response = self.response_to_json(put_response)
+        self.assert_node_json(json_response,
+                              'cast',
+                              'pgadmin.node.cast',
+                              False,
+                              'icon-cast',
+                              'character->cidr')
 
     def tearDown(self):
         """This function disconnect the test database and drop added cast."""

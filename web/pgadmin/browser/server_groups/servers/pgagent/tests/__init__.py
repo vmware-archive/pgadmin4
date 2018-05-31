@@ -6,10 +6,3 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
-from pgadmin.utils.route import BaseTestGenerator
-
-
-class PgAgentCreateTestCase(BaseTestGenerator):
-    def runTest(self):
-        return

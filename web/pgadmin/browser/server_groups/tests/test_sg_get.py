@@ -9,26 +9,25 @@
 
 import json
 
-from pgadmin.utils.route import BaseTestGenerator
+from grappa import should
+
 from regression.test_setup import config_data
 
 
-class SgNodeTestCase(BaseTestGenerator):
-    """
-     This class will check available server groups in pgAdmin.
-    """
+class TestServerGroupNode:
+    def test_server_group_node(self, context_of_tests):
+        """
+        When a get request is made to the server group endpoint
+        It returns status 200 and the server group
+        """
 
-    scenarios = [
-        # Fetching the default url for server group node
-        ('Check Server Group Node', dict(url='/browser/server_group/obj/'))
-    ]
-
-    def runTest(self):
-        """This function will check available server groups."""
+        url = '/browser/server_group/obj/'
+        http_client = context_of_tests['test_client']
 
         server_group_id = config_data['server_group']
-        response = self.tester.get(self.url + str(server_group_id),
+        response = http_client.get(url + str(server_group_id),
                                    content_type='html/json')
-        self.assertTrue(response.status_code, 200)
+
+        response.status_code | should.equal(200)
         response_data = json.loads(response.data.decode('utf8'))
-        self.assertTrue(response_data['id'], server_group_id)
+        response_data['id'] | should.equal(server_group_id)

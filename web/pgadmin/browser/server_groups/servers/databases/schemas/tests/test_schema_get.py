@@ -6,46 +6,58 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+from grappa import should
 
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
 from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 
 
-class SchemaGetTestCase(BaseTestGenerator):
-    """ This class will add new schema under database node. """
-    scenarios = [
-        # Fetching default URL for extension node.
-        ('Check Schema Node URL', dict(url='/browser/schema/obj/'))
-    ]
+class TestSchemaGet:
+    def test_schema_get(self, request, context_of_tests):
+        """
+        When the schema get request is send to the backend
+        it returns 200 status
+        """
+        request.addfinalizer(self.tearDown)
 
-    def runTest(self):
-        """ This function will delete schema under database node. """
-        schema = parent_node_dict["schema"][-1]
-        db_id = schema["db_id"]
-        server_id = schema["server_id"]
+        url = '/browser/schema/obj/'
 
-        server_response = server_utils.connect_server(self, server_id)
-        if not server_response["data"]["connected"]:
-            raise Exception("Could not connect to server to connect the"
-                            " database.")
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_data = parent_node_dict['database'][-1]
+        self.server_id = self.server_data['server_id']
+        self.db_id = self.server_data['db_id']
+        self.db_name = self.server_data['db_name']
+
+        self.schema_info = parent_node_dict['schema'][-1]
+        self.schema_name = self.schema_info['schema_name']
+        self.schema_id = self.schema_info['schema_id']
 
         db_con = database_utils.connect_database(self,
                                                  utils.SERVER_GROUP,
-                                                 server_id,
-                                                 db_id)
+                                                 self.server_id,
+                                                 self.db_id)
         if not db_con["info"] == "Database connected.":
-            raise Exception("Could not connect to database to get the schema.")
+            raise Exception("Could not connect to database.")
 
-        schema_id = schema["schema_id"]
-        schema_response = self.tester.get(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(server_id) + '/' + str(db_id) +
-            '/' + str(schema_id),
+        response = self.tester.get(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id) + '/' +
+            str(self.db_id) + '/' +
+            str(self.schema_id),
             content_type='html/json')
-        self.assertEquals(schema_response.status_code, 200)
-        # Disconnect the database
-        database_utils.disconnect_database(self, server_id, db_id)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('oid')
+        json_response | should.have.key('name') > \
+            should.be.equal.to(self.schema_name)
+
+    def tearDown(self):
+        database_utils.client_disconnect_database(self.tester, self.server_id,
+                                                  self.db_id)

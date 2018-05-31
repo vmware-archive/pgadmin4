@@ -7,66 +7,63 @@
 #
 ##########################################################################
 import sys
+
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tables import \
     BaseTableView
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 
 if sys.version_info < (3, 3):
-    from mock import patch, MagicMock
+    from mock import MagicMock, patch
 else:
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock, patch
 
 
-class TestBaseView(BaseTableView):
+class BaseView(BaseTableView):
     @BaseTableView.check_precondition
     def test(self, did, sid):
         pass
 
 
 class TestUtils(BaseTestGenerator):
-    scenarios = [
-        ('Test wrapping function', dict(test='wrap'))
-    ]
+    @patch('pgadmin.browser.server_groups.servers'
+           '.databases.schemas.tables.utils'
+           '.get_driver')
+    def test_wrapping_function(self, get_driver_mock):
+        """
+        It returns stubbed values for tests
+        """
 
-    def runTest(self):
-        if self.test == 'wrap':
-            self.__wrap_tests()
+        subject = BaseView(cmd='something')
+        get_driver_mock.return_value = MagicMock(
+            connection_manager=MagicMock(
+                return_value=MagicMock(
+                    connection=MagicMock(),
+                    db_info={
+                        1: dict(datlastsysoid=False)
+                    },
+                    version=10,
+                    server_type='gpdb'
+                )
+            ),
+            qtIndent=MagicMock(),
+            qtTypeIdent=MagicMock()
+        )
 
-    def __wrap_tests(self):
-        subject = TestBaseView(cmd='something')
-        with patch('pgadmin.browser.server_groups.servers.databases.schemas'
-                   '.tables.utils.get_driver') as get_driver_mock:
-            get_driver_mock.return_value = MagicMock(
-                connection_manager=MagicMock(
-                    return_value=MagicMock(
-                        connection=MagicMock(),
-                        db_info={
-                            1: dict(datlastsysoid=False)
-                        },
-                        version=10,
-                        server_type='gpdb'
-                    )
-                ),
-                qtIndent=MagicMock(),
-                qtTypeIdent=MagicMock()
-            )
-            subject.test(did=1, sid=2)
-            self.assertEqual(
-                subject.table_template_path, 'table/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.data_type_template_path, 'datatype/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.check_constraint_template_path,
-                'check_constraint/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.exclusion_constraint_template_path,
-                'exclusion_constraint/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.foreign_key_template_path,
-                'foreign_key/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.index_template_path,
-                'index/sql/#gpdb#10#')
-            self.assertEqual(
-                subject.trigger_template_path,
-                'trigger/sql/#gpdb#10#')
+        subject.test(did=1, sid=2)
+
+        subject.table_template_path | \
+            should.equal('table/sql/#gpdb#10#')
+        subject.data_type_template_path | \
+            should.equal('datatype/sql/#gpdb#10#')
+        subject.check_constraint_template_path | \
+            should.equal('check_constraint/sql/#gpdb#10#')
+        subject.exclusion_constraint_template_path | \
+            should.equal('exclusion_constraint/sql/#gpdb#10#')
+        subject.foreign_key_template_path | \
+            should.equal('foreign_key/sql/#gpdb#10#')
+        subject.index_template_path | \
+            should.equal('index/sql/#gpdb#10#')
+        subject.trigger_template_path | \
+            should.equal('trigger/sql/#gpdb#10#')

@@ -10,83 +10,76 @@
 import json
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
 from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 
 
-class PackageAddTestCase(BaseTestGenerator):
-    """ This class will add new package under test schema. """
-    skip_on_database = ['gpdb']
+@pytest.mark.skip_databases(['gpdb', 'pg'])
+class TestPackageAdd:
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_package_add(self, context_of_tests):
+        """
+        When the package add request is send to the backend
+        it returns 200 status
+        """
+        url = '/browser/package/obj/'
 
-    scenarios = [
-        # Fetching default URL for package node.
-        ('Fetch Package Node URL', dict(
-            url='/browser/package/obj/'))
-    ]
+        tester = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        db_name = server_data['db_name']
 
-    def setUp(self):
-        super(PackageAddTestCase, self).setUp()
-        schema_info = parent_node_dict["schema"][-1]
-        self.schema_id = schema_info["schema_id"]
-        self.schema_name = schema_info["schema_name"]
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        server_con = server_utils.connect_server(self, self.server_id)
+        schema_name = server_data['schema_name']
+        schema_id = server_data['schema_id']
 
-        if server_con:
-            if "type" in server_con["data"]:
-                if server_con["data"]["type"] == "pg":
-                    message = "Packages are not supported by PG."
-                    self.skipTest(message)
-
-    def runTest(self):
-        """ This function will add package under test schema. """
-
-        db_con = database_utils.connect_database(self,
-                                                 utils.SERVER_GROUP,
-                                                 self.server_id,
-                                                 self.db_id)
-
-        if not db_con["info"] == "Database connected.":
-            raise Exception("Could not connect to database.")
-
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      self.db_name,
-                                                      self.schema_name)
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
             raise Exception("Could not find the schema.")
 
+        package_name = "pkg_%s" % str(uuid.uuid4())[1:8]
         data = \
             {
-                "name": "pkg_%s" % str(uuid.uuid4())[1:8],
-                "owner": self.server["username"],
+                "name": package_name,
+                "owner": server["username"],
                 "pkgacl": [],
                 "pkgbodysrc": "PROCEDURE p1() is \n"
                               "begin \n"
                               "dbms_output.put_line('Test_pkg.Proc...'); "
                               "\nEND\t;",
                 "pkgheadsrc": "PROCEDURE p1();",
-                "schema": self.schema_id
+                "schema": schema_id
             }
 
-        response = self.tester.post(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(self.server_id) + '/' + str(self.db_id) +
-            '/' + str(self.schema_id) + '/',
+        response = tester.post(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(server_id) + '/' +
+            str(db_id) + '/' +
+            str(schema_id) + '/',
             data=json.dumps(data),
             content_type='html/json')
 
-        self.assertEquals(response.status_code, 200)
-
-    def tearDown(self):
-        """This function disconnect the test database."""
-
-        database_utils.disconnect_database(self, self.server_id,
-                                           self.db_id)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        assert_json_values_from_response(
+            json_response,
+            'package',
+            'pgadmin.node.package',
+            False,
+            'icon-package',
+            package_name
+        )

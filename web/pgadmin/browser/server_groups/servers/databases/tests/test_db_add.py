@@ -9,51 +9,58 @@
 
 import json
 
+from grappa import should
+
 from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as database_utils
 
 
-class DatabaseAddTestCase(BaseTestGenerator):
-    """This class will test the ADD database API"""
-    scenarios = [
-        # Fetching default URL for database node.
-        ('Check Databases Node URL', dict(url='/browser/database/obj/'))
-    ]
+class TestDatabaseAdd:
 
-    def setUp(self):
-        pass
+    def test_database_add(self, request, context_of_tests):
+        """
+        When sending post request to database endpoint
+        it returns 200 status
+        """
 
-    def runTest(self):
-        """ This function will add database under 1st server of tree node. """
-        self.db_name = ''
-        self.server_id = parent_node_dict["server"][-1]["server_id"]
-        server_response = server_utils.connect_server(self, self.server_id)
-        if server_response["info"] == "Server connected.":
-            db_owner = server_response['data']['user']['name']
-            self.data = database_utils.get_db_data(db_owner)
-            self.data['template'] = 'template0'
-            self.db_name = self.data['name']
-            response = self.tester.post(self.url + str(utils.SERVER_GROUP) +
-                                        "/" + str(self.server_id) + "/",
-                                        data=json.dumps(self.data),
-                                        content_type='html/json')
-            self.assertEquals(response.status_code, 200)
-            response_data = json.loads(response.data.decode('utf-8'))
-            db_id = response_data['node']['_id']
-            db_dict = {"server_id": self.server_id, "db_id": db_id,
-                       "db_name": self.db_name}
-            utils.write_node_info("did", db_dict)
-        else:
-            raise Exception("Error while connecting server to add the"
-                            " database.")
+        request.addfinalizer(self.tearDown)
+
+        self.server = context_of_tests['server']
+        http_client = context_of_tests['test_client']
+        url = '/browser/database/obj/'
+        server_id = context_of_tests['server_information']['server_id']
+        server_response = server_utils.client_connect_server(
+            http_client,
+            server_id,
+            self.server['db_password'])
+        if not server_response['data']['connected']:
+            raise Exception('Server not found.')
+
+        db_owner = server_response['data']['user']['name']
+        data = database_utils.get_db_data(db_owner)
+        data['template'] = 'template0'
+        self.db_name = data['name']
+
+        response = http_client.post(
+            url + str(utils.SERVER_GROUP) + "/" +
+            str(server_id) + "/",
+            data=json.dumps(data),
+            content_type='html/json')
+
+        response.status_code | should.be.equal(200)
+
+        response_data = json.loads(response.data.decode('utf-8'))
+        db_id = response_data['node']['_id']
+        db_dict = {
+            "server_id": server_id,
+            "db_id": db_id,
+            "db_name": 'baa'
+        }
+
+        utils.write_node_info("did", db_dict)
 
     def tearDown(self):
-        """
-        This function delete the database from server added in SQLite.
-        """
         connection = utils.get_db_connection(self.server['db'],
                                              self.server['username'],
                                              self.server['db_password'],

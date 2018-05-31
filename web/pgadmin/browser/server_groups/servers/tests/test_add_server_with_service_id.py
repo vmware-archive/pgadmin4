@@ -9,39 +9,35 @@
 
 import json
 
-from pgadmin.utils.route import BaseTestGenerator
+from grappa import should
+
 from regression.python_test_utils import test_utils as utils
 
 
-class ServersWithServiceIDAddTestCase(BaseTestGenerator):
-    """ This class will add the servers under default server group. """
+class TestServersWithServiceIDAdd:
+    def test_server_with_id_add(self, request, context_of_tests):
+        """
+        When sending a post request to add server with service id
+        It returns 200 status code
+        """
 
-    scenarios = [
-        # Fetch the default url for server object
-        (
-            'Default Server Node url', dict(
-                url='/browser/server/obj/'
-            )
-        )
-    ]
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        pass
+        url = "/browser/server/obj/{0}/".format(utils.SERVER_GROUP)
 
-    def runTest(self):
-        """ This function will add the server under default server group."""
-        url = "{0}{1}/".format(self.url, utils.SERVER_GROUP)
-        # Add service name in the config
-        self.server['service'] = "TestDB"
+        server = context_of_tests['server']
+        server['service'] = "TestDB"
+        self.tester = context_of_tests['test_client']
+
         response = self.tester.post(
             url,
-            data=json.dumps(self.server),
+            data=json.dumps(server),
             content_type='html/json'
         )
-        self.assertEquals(response.status_code, 200)
+
+        response.status_code | should.equal(200)
         response_data = json.loads(response.data.decode('utf-8'))
         self.server_id = response_data['node']['_id']
 
     def tearDown(self):
-        """This function delete the server from SQLite """
         utils.delete_server_with_api(self.tester, self.server_id)

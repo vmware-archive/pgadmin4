@@ -10,9 +10,10 @@
 import os
 import sys
 from flask import Flask, render_template
+from grappa import should
 from jinja2 import FileSystemLoader
 from pgadmin import VersionedTemplateLoader
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 
 if sys.version_info < (3, 3):
     from mock import MagicMock
@@ -61,198 +62,182 @@ DATABASE_ID = 123
 _ = MagicMock(side_effect=lambda x: x)
 
 
-class TestDashboardTemplates(BaseTestGenerator):
-    scenarios = [
-        # Server dashboard
-        (
-            'Dashboard, when returning the html page with graphs and '
-            'server activity related html elements for server dashboard',
-            dict(
-                template_path='dashboard/server_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=None,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['both'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Server sessions',
-                    'Server activity'
-                ],
-                not_expected_return_value=[]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with only graphs '
-            'related html elements for server dashboard',
-            dict(
-                template_path='dashboard/server_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=None,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['only_graphs'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Server sessions'
-                ],
-                not_expected_return_value=[
-                    'Server activity'
-                ]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with only server '
-            'activity related html elements for server dashboard',
-            dict(
-                template_path='dashboard/server_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=None,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['only_server_activity'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Server activity'
-                ],
-                not_expected_return_value=[
-                    'Server sessions'
-                ]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with neither '
-            'graphs nor server activity related html elements for server '
-            'dashboard',
-            dict(
-                template_path='dashboard/server_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=None,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['none'],
-                    _=_
-                ),
-                expected_return_value=[],
-                not_expected_return_value=[
-                    'Server activity',
-                    'Server sessions'
-                ]
-            )
-        ),
-        # Database dashboard
-        (
-            'Dashboard, when returning the html page with graphs and '
-            'database activity related html elements for database dashboard',
-            dict(
-                template_path='dashboard/database_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=DATABASE_ID,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['both'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Database sessions',
-                    'Database activity'
-                ],
-                not_expected_return_value=[]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with only '
-            'graphs related html elements for database dashboard',
-            dict(
-                template_path='dashboard/database_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=DATABASE_ID,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['only_graphs'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Database sessions'
-                ],
-                not_expected_return_value=[
-                    'Database activity'
-                ]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with only '
-            'database activity related html elements for database dashboard',
-            dict(
-                template_path='dashboard/database_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=DATABASE_ID,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['only_server_activity'],
-                    _=_
-                ),
-                expected_return_value=[
-                    'Database activity'
-                ],
-                not_expected_return_value=[
-                    'Database sessions'
-                ]
-            )
-        ),
-        (
-            'Dashboard, when returning the html page with neither '
-            'graphs nor database activity related html elements for database '
-            'dashboard',
-            dict(
-                template_path='dashboard/database_dashboard.html',
-                input_parameters=dict(
-                    sid=SERVER_ID,
-                    did=DATABASE_ID,
-                    rates=RATES,
-                    version=VERSION,
-                    settings=DISPLAY_DASHBOARD['none'],
-                    _=_
-                ),
-                expected_return_value=[],
-                not_expected_return_value=[
-                    'Database sessions',
-                    'Database activity'
-                ]
-            )
-        ),
+class TestDashboardTemplates:
+    def testDashboardTemplGraphsAndServer(self):
+        """
+        Dashboard should be able to render html page with graphs
+        and server activity related elements
+        """
 
-    ]
-
-    def setUp(self):
         self.loader = VersionedTemplateLoader(FakeApp())
 
-    def runTest(self):
         with FakeApp().app_context():
             result = render_template(
-                self.template_path, **self.input_parameters
+                'dashboard/server_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['both'],
+                _=_
             )
-            # checks for expected html elements
-            for expected_string in self.expected_return_value:
-                self.assertIn(
-                    expected_string, result
-                )
 
-            # checks for not expected html elements
-            for not_expected_string in self.not_expected_return_value:
-                self.assertNotIn(
-                    not_expected_string, result
-                )
+            result | should.contain("Server sessions")
+            result | should.contain("Server activity")
+
+    def testDashboardTemplGraphs(self):
+        """
+        Dashboard should be able to render html page
+        with only graph related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/server_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['only_graphs'],
+                _=_
+            )
+
+            result | should.contain("Server sessions")
+            result | should._not.contain("Server activity")
+
+    def testDashboardTemplServer(self):
+        """
+        Dashboard should be able to render html page
+        with only server activity related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/server_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['only_server_activity'],
+                _=_
+            )
+
+            result | should.contain("Server activity")
+            result | should._not.contain("Server sessions")
+
+    def testDashboardTemplNone(self):
+        """
+        Dashboard should be able to render html page
+        with only server activity related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/server_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['none'],
+                _=_
+            )
+
+            result | should._not.contain("Server activity")
+            result | should._not.contain("Server sessions")
+
+    def testDBDashboardTemplGraphsAndServer(self):
+        """
+        DB Dashboard should be able to render html page with graphs
+        and server activity related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/database_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['both'],
+                _=_
+            )
+
+            result | should.contain("Database sessions")
+            result | should.contain("Database activity")
+
+    def testDBDashboardTemplGraphs(self):
+        """
+        DB Dashboard should be able to render html page
+        with only graph related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/database_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['only_graphs'],
+                _=_
+            )
+
+            result | should.contain("Database sessions")
+            result | should._not.contain("Database activity")
+
+    def testDBDashboardTemplServer(self):
+        """
+        DB Dashboard should be able to render html page
+        with only server activity related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/database_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['only_server_activity'],
+                _=_
+            )
+
+            result | should.contain("Database activity")
+            result | should._not.contain("Database sessions")
+
+    def testDBDashboardTemplNone(self):
+        """
+        DB Dashboard should be able to render html page
+        with only server activity related elements
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'dashboard/database_dashboard.html',
+                sid=SERVER_ID,
+                did=None,
+                rates=RATES,
+                version=VERSION,
+                settings=DISPLAY_DASHBOARD['none'],
+                _=_
+            )
+
+            result | should._not.contain("Database activity")
+            result | should._not.contain("Database sessions")
 
 
 class FakeApp(Flask):

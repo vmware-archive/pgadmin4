@@ -6,33 +6,31 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+import pytest
+from grappa import should
 
-from pgadmin.utils.route import BaseTestGenerator
 from regression.python_test_utils import test_utils
 
 
-class TestSSLConnection(BaseTestGenerator):
-    """This will check if SSL is used in our database connection"""
-    scenarios = [
-        ('Test for SSL connection', dict())
-    ]
+class TestSSLConnection:
+    def test_ssl_connection(self, context_of_tests):
+        """
+        It verifies SSL connection
+        """
+        server = context_of_tests['server']
 
-    def runTest(self):
-        if hasattr(self, 'ignore_test'):
-            return
         supported_modes = ['require', 'verify-ca', 'verify-full']
-        if self.server['sslmode'] in supported_modes:
-            with test_utils.Database(self.server) as (
-                connection, database_name
-            ):
-
-                cursor = connection.cursor()
-                cursor.execute("CREATE EXTENSION sslinfo")
-                connection.commit()
-                cursor.execute("SELECT ssl_is_used()")
-                is_ssl_used = cursor.fetchone()[0]
-                self.assertEquals(True, is_ssl_used)
-        else:
-            self.skipTest(
+        if server['sslmode'] not in supported_modes:
+            pytest.skip(
                 'Cannot run SSL connection check test '
-                'with \'{0}\' sslmode'.format(self.server['sslmode']))
+                'with \'{0}\' sslmode'.format(server['sslmode'])
+            )
+
+        with test_utils.Database(server) as (
+            connection, database_name
+        ):
+            cursor = connection.cursor()
+            cursor.execute("CREATE EXTENSION sslinfo")
+            connection.commit()
+            cursor.execute("SELECT ssl_is_used()")
+            cursor.fetchone()[0] | should.equal('True')

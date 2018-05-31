@@ -6,102 +6,48 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-from pgadmin.browser.server_groups.servers.databases.schemas\
+import pytest
+from grappa import should
+
+from pgadmin.browser.server_groups.servers.databases.schemas \
     .tables.base_partition_table import BasePartitionTable
-from pgadmin.utils.route import BaseTestGenerator
 
 
-class TestBasePartitionTable(BaseTestGenerator):
-    scenarios = [
-        ('#is_table_partitioned when table information does not '
-         'have partition information, '
-         'it returns false',
-         dict(
-             test='is_table_partitioned',
-             input_parameters=dict(),
-             expected_return=False
-         )),
-        ('#is_table_partitioned when table information '
-         'has partition information and table is partitioned, '
-         'it returns true',
-         dict(
-             test='is_table_partitioned',
-             input_parameters=dict(
-                 is_partitioned=True
-             ),
-             expected_return=True
-         )),
-        ('#is_table_partitioned when table information '
-         'has partition information and table is not partitioned, '
-         'it returns false',
-         dict(
-             test='is_table_partitioned',
-             input_parameters=dict(
-                 is_partitioned=False
-             ),
-             expected_return=False
-         )),
-        ('#is_table_partitioned when node_type is present '
-         'and is partition, '
-         'it returns true',
-         dict(
-             test='is_table_partitioned',
-             input_parameters=dict(
-                 is_partitioned=False
-             ),
-             node_type='partition',
-             expected_return=True
-         )),
-        ('#is_table_partitioned when node_type is present '
-         'and is not partition '
-         'and table is not partitioned '
-         'it returns true',
-         dict(
-             test='is_table_partitioned',
-             input_parameters=dict(
-                 is_partitioned=False
-             ),
-             node_type='table',
-             expected_return=False
-         )),
-
-
-        ('#get_icon_css_class when table is partitioned '
-         'it returns icon-partition class',
-         dict(
-             test='get_icon_css_class',
-             input_parameters=dict(
-                 is_partitioned=True
-             ),
-             expected_return='icon-partition'
-         )),
-        ('#get_icon_css_class when table is not partitioned '
-         'it returns icon-table class',
-         dict(
-             test='get_icon_css_class',
-             input_parameters=dict(
-                 is_partitioned=False
-             ),
-             expected_return='icon-table'
-         ))
-    ]
-
-    def runTest(self):
-        if self.test == 'is_table_partitioned':
-            self.__test_is_table_partitioned()
-        elif self.test == 'get_icon_css_class':
-            self.__test_get_icon_css_class()
-
-    def __test_is_table_partitioned(self):
+class TestIsTablePartitioned:
+    """
+    test #is_table_partitioned
+    """
+    @pytest.mark.parametrize(
+        'input_parameters, expected_return, node_type', [
+            (dict(), False, None),
+            (dict(is_partitioned=True), True, None),
+            (dict(is_partitioned=False), False, None),
+            (dict(is_partitioned=False), True, 'partition'),
+            (dict(is_partitioned=False), False, 'table'),
+        ])
+    def test_is_table_partitioned(self,
+                                  input_parameters,
+                                  expected_return,
+                                  node_type):
         subject = BasePartitionTable()
-        if hasattr(self, 'node_type'):
-            subject.node_type = self.node_type
+        if node_type is not None:
+            subject.node_type = node_type
 
-        self.assertEqual(subject.is_table_partitioned(self.input_parameters),
-                         self.expected_return)
+        subject.is_table_partitioned(input_parameters) | should.be.equal.to(
+            expected_return)
 
-    def __test_get_icon_css_class(self):
+
+class TestGetIconCSSClass:
+    """
+    test #get_icon_css_class
+    """
+    @pytest.mark.parametrize(
+        'input_parameters, expected_return', [
+            (dict(is_partitioned=True), 'icon-partition'),
+            (dict(is_partitioned=False), 'icon-table'),
+        ])
+    def test_get_icon_css_class(self, input_parameters, expected_return):
         subject = BasePartitionTable()
 
-        self.assertEqual(subject.get_icon_css_class(self.input_parameters),
-                         self.expected_return)
+        subject.get_icon_css_class(input_parameters) | should.be.equal.to(
+            expected_return)

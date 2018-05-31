@@ -9,9 +9,10 @@
 
 import sys
 
-from pgadmin.browser.server_groups.servers.databases.schemas.tables.\
+from grappa import should
+
+from pgadmin.browser.server_groups.servers.databases.schemas.tables. \
     partitions import PartitionsModule
-from pgadmin.utils.route import BaseTestGenerator
 
 if sys.version_info < (3, 3):
     from mock import patch, Mock, call
@@ -19,79 +20,110 @@ else:
     from unittest.mock import patch, Mock, call
 
 
-class TestBackendSupport(BaseTestGenerator):
-    scenarios = [
-        ('when tid is not present in arguments, should return None and no '
-         'query should be done',
-         dict(
-             manager=dict(
-                 server_type="",
-                 version=""
-             ),
-             input_arguments=dict(did=432),
+class TestBackendSupport:
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.CollectionNodeModule'
+    )
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.render_template'
+    )
+    def test_not_all_arguments_present(
+        self, render_template_mock, CollectionNodeModule_mock
+    ):
+        """
+        When tid is not present in the arguments
+        It return None and no query should be done
+        """
+        module = PartitionsModule('partition')
+        module.manager = Mock()
+        module.manager.server_type = ''
+        module.manager.version = ''
+        connection_mock = Mock()
+        connection_mock.execute_scalar.return_value = []
+        module.manager.connection.return_value = connection_mock
+        CollectionNodeModule_mock.BackendSupported.return_value = True
 
-             collection_node_active=True,
-             connection_execution_return_value=[],
+        result = module.BackendSupported(
+            module.manager,
+            did=432
+        )
 
-             expected_return_value=None,
-             expect_error_response=False,
-             expected_number_calls_on_render_template=0
-         )),
-        ('when tid is present in arguments and CollectionNodeModule does '
-         'not support, should return None and no query should be done',
-         dict(
-             manager=dict(
-                 server_type="",
-                 version=""
-             ),
-             input_arguments=dict(did=432, tid=123),
+        render_template_mock.assert_not_called()
 
-             collection_node_active=False,
-             connection_execution_return_value=[],
+        result | should.be.none
 
-             expected_return_value=None,
-             expect_error_response=False,
-             expected_number_calls_on_render_template=0
-         )),
-        ('when table is partitioned, '
-         'should return the table identifier',
-         dict(
-             manager=dict(
-                 server_type="gpdb",
-                 version="5"
-             ),
-             input_arguments=dict(did=432, tid=123),
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.CollectionNodeModule'
+    )
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.render_template'
+    )
+    def test_tid_present_not_supported(
+        self, render_template_mock, CollectionNodeModule_mock
+    ):
+        """
+        when tid is present in arguments
+        And CollectionNodeModule does not support
+        It return None and no query should be done
+        """
+        module = PartitionsModule('partition')
+        module.manager = Mock()
+        module.manager.server_type = ''
+        module.manager.version = ''
+        connection_mock = Mock()
+        connection_mock.execute_scalar.return_value = []
+        module.manager.connection.return_value = connection_mock
+        CollectionNodeModule_mock.BackendSupported.return_value = False
 
-             collection_node_active=True,
-             connection_execution_return_value=[True, 123],
+        result = module.BackendSupported(
+            module.manager,
+            did=432,
+            tid=123
+        )
 
-             expected_return_value=123,
-             expect_error_response=False,
-             expected_number_calls_on_render_template=1,
-             expect_render_template_to_be_called_with=call(
-                 'partition/sql/gpdb/#gpdb#5#/backend_support.sql', tid=123
-             )
-         )),
-        ('when error happens while querying the database, '
-         'should return an internal server error',
-         dict(
-             manager=dict(
-                 server_type="pg",
-                 version="10"
-             ),
-             input_arguments=dict(did=432, tid=123),
+        render_template_mock.assert_not_called()
 
-             collection_node_active=True,
-             connection_execution_return_value=[False, "Some ugly error"],
+        result | should.be.none
 
-             expected_return_value=None,
-             expect_error_response=True,
-             expected_number_calls_on_render_template=1,
-             expect_render_template_to_be_called_with=call(
-                 'partition/sql/pg/#pg#10#/backend_support.sql', tid=123
-             )
-         ))
-    ]
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.CollectionNodeModule'
+    )
+    @patch(
+        'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
+        'partitions.render_template'
+    )
+    def test_table_partitioned(
+        self, render_template_mock, CollectionNodeModule_mock
+    ):
+        """
+        When table is partitioned
+        It return the table identifier
+        """
+        module = PartitionsModule('partition')
+        module.manager = Mock()
+        module.manager.server_type = 'gpdb'
+        module.manager.version = '5'
+        connection_mock = Mock()
+        connection_mock.execute_scalar.return_value = [True, 123]
+        module.manager.connection.return_value = connection_mock
+        CollectionNodeModule_mock.BackendSupported.return_value = True
+
+        result = module.BackendSupported(
+            module.manager,
+            did=432,
+            tid=123
+        )
+
+        render_template_mock.assert_has_calls(
+            [call('partition/sql/gpdb/#gpdb#5#/backend_support.sql', tid=123)]
+        )
+
+        result | should.be.equal.to(123)
 
     @patch(
         'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
@@ -105,35 +137,35 @@ class TestBackendSupport(BaseTestGenerator):
         'pgadmin.browser.server_groups.servers.databases.schemas.tables.'
         'partitions.render_template'
     )
-    def runTest(
+    def test_error_while_querying_database(
         self, render_template_mock, CollectionNodeModule_mock,
         internal_server_error_mock
     ):
-        module = PartitionsModule("partition")
+        """
+        When error happens while querying the database
+        It return an internal server error
+        """
+        module = PartitionsModule('partition')
         module.manager = Mock()
-        module.manager.server_type = self.manager['server_type']
-        module.manager.version = self.manager['version']
+        module.manager.server_type = 'pg'
+        module.manager.version = '10'
         connection_mock = Mock()
-        connection_mock.execute_scalar.return_value = \
-            self.connection_execution_return_value
+        connection_mock.execute_scalar.return_value = [
+            False,
+            'Some ugly error']
         module.manager.connection.return_value = connection_mock
-        CollectionNodeModule_mock.BackendSupported.return_value = \
-            self.collection_node_active
+        CollectionNodeModule_mock.BackendSupported.return_value = True
 
-        result = module.BackendSupported(
-            module.manager, **self.input_arguments
+        module.BackendSupported(
+            module.manager,
+            did=432,
+            tid=123
         )
 
-        if self.expected_number_calls_on_render_template == 0:
-            render_template_mock.assert_not_called()
-        else:
-            render_template_mock.assert_has_calls(
-                [self.expect_render_template_to_be_called_with]
-            )
+        render_template_mock.assert_has_calls(
+            [call('partition/sql/pg/#pg#10#/backend_support.sql', tid=123)]
+        )
 
-        if self.expect_error_response:
-            internal_server_error_mock.assert_called_with(
-                errormsg=self.connection_execution_return_value[1]
-            )
-        else:
-            self.assertEqual(result, self.expected_return_value)
+        internal_server_error_mock.assert_called_with(
+            errormsg='Some ugly error'
+        )

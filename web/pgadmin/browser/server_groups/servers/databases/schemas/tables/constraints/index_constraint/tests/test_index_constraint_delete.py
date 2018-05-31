@@ -9,79 +9,124 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tables.tests \
     import utils as tables_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
-from pgadmin.browser.server_groups.servers.databases.tests import utils as \
-    database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression.python_test_utils import test_utils as utils
 from . import utils as index_constraint_utils
 
 
-class IndexConstraintDeleteTestCase(BaseTestGenerator):
-    """This class will delete index constraint(primary key or unique key) of
-    table column"""
-    skip_on_database = ['gpdb']
-    primary_key_name = "test_primarykey_delete_%s" % \
-                       (str(uuid.uuid4())[1:8])
-    unique_key_name = "test_uniquekey_delete_%s" % \
-                      (str(uuid.uuid4())[1:8])
-    scenarios = [
-        ('Delete primary Key constraint of table',
-         dict(url='/browser/primary_key/obj/', name=primary_key_name,
-              type="PRIMARY KEY")),
-        ('Delete unique Key constraint of table',
-         dict(url='/browser/unique_constraint/obj/', name=unique_key_name,
-              type="UNIQUE"))
-    ]
+@pytest.mark.skip_databases(['gpdb'])
+class TestIndexConstraintDelete:
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_primary_key_delete(self, context_of_tests):
+        """
+        When the Primary Key Constraint DELETE request is send to the backend
+        it returns 200 status
+        """
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
 
-    @classmethod
-    def setUpClass(cls):
-        cls.db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        cls.server_id = schema_info["server_id"]
-        cls.db_id = schema_info["db_id"]
-        db_con = database_utils.connect_database(cls, utils.SERVER_GROUP,
-                                                 cls.server_id, cls.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to add a "
-                            "index constraint(primary key or unique key).")
-        cls.schema_id = schema_info["schema_id"]
-        cls.schema_name = schema_info["schema_name"]
-        schema_response = schema_utils.verify_schemas(cls.server,
-                                                      cls.db_name,
-                                                      cls.schema_name)
+        db_name = server_data['db_name']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        schema_id = server_data['schema_id']
+        schema_name = server_data['schema_name']
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
-            raise Exception("Could not find the schema to add a index "
-                            "constraint(primary key or unique key).")
-        cls.table_name = "table_indexconstraint_%s" % \
-                         (str(uuid.uuid4())[1:8])
-        cls.table_id = tables_utils.create_table(cls.server,
-                                                 cls.db_name,
-                                                 cls.schema_name,
-                                                 cls.table_name)
+            raise Exception('Could not find the schema to add a index '
+                            'constraint(primary key or unique key).')
+        table_name = 'table_indexconstraint_%s' % \
+                     (str(uuid.uuid4())[1:8])
+        table_id = tables_utils.create_table(server,
+                                             db_name,
+                                             schema_name,
+                                             table_name)
 
-    def runTest(self):
-        """This function will delete index constraint(primary key or
-        unique key) of table column."""
+        primary_key_name = 'test_primarykey_delete_%s' % \
+                           (str(uuid.uuid4())[1:8])
         index_constraint_id = \
             index_constraint_utils.create_index_constraint(
-                self.server, self.db_name, self.schema_name, self.table_name,
-                self.name, self.type)
-        response = self.tester.delete(
-            "{0}{1}/{2}/{3}/{4}/{5}/{6}".format(self.url, utils.SERVER_GROUP,
-                                                self.server_id, self.db_id,
-                                                self.schema_id,
-                                                self.table_id,
+                server, db_name, schema_name, table_name,
+                primary_key_name, 'PRIMARY KEY')
+        url = '/browser/primary_key/obj/'
+
+        response = http_client.delete(
+            '{0}{1}/{2}/{3}/{4}/{5}/{6}'.format(url, utils.SERVER_GROUP,
+                                                server_id, db_id,
+                                                schema_id,
+                                                table_id,
                                                 index_constraint_id),
             follow_redirects=True
         )
-        self.assertEquals(response.status_code, 200)
 
-    @classmethod
-    def tearDownClass(cls):
-        # Disconnect the database
-        database_utils.disconnect_database(cls, cls.server_id, cls.db_id)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('info') > should.be.equal.to(
+            'Primary key dropped.')
+        json_response | should.have.key('errormsg') > should.be.empty
+        json_response | should.have.key('data')
+        json_response | should.have.key('result') > should.be.none
+        json_response | should.have.key('success') > should.be.equal.to(1)
+
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_unique_constraint_delete(self, context_of_tests):
+        """
+        When the Unique Constraint DELETE request is send to the backend
+        it returns 200 status
+        """
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
+
+        db_name = server_data['db_name']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        schema_id = server_data['schema_id']
+        schema_name = server_data['schema_name']
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
+        if not schema_response:
+            raise Exception('Could not find the schema to add a index '
+                            'constraint(primary key or unique key).')
+        table_name = 'table_indexconstraint_%s' % \
+                     (str(uuid.uuid4())[1:8])
+        table_id = tables_utils.create_table(server,
+                                             db_name,
+                                             schema_name,
+                                             table_name)
+
+        unique_constraint_name = 'test_uniquekey_delete_%s' % \
+                                 (str(uuid.uuid4())[1:8])
+        index_constraint_id = \
+            index_constraint_utils.create_index_constraint(
+                server, db_name, schema_name, table_name,
+                unique_constraint_name, 'UNIQUE')
+        url = '/browser/unique_constraint/obj/'
+
+        response = http_client.delete(
+            '{0}{1}/{2}/{3}/{4}/{5}/{6}'.format(url, utils.SERVER_GROUP,
+                                                server_id, db_id,
+                                                schema_id,
+                                                table_id,
+                                                index_constraint_id),
+            follow_redirects=True
+        )
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('info') > should.be.equal.to(
+            'Unique constraint dropped.')
+        json_response | should.have.key('errormsg') > should.be.empty
+        json_response | should.have.key('data')
+        json_response | should.have.key('result') > should.be.none
+        json_response | should.have.key('success') > should.be.equal.to(1)

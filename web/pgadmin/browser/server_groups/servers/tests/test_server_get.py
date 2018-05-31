@@ -7,38 +7,36 @@
 #
 ##########################################################################
 
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from grappa import should
+
 from regression.python_test_utils import test_utils as utils
 
 
-class ServersGetTestCase(BaseTestGenerator):
-    """
-    This class will fetch added servers under default server group
-    by response code.
-    """
+class TestServersGet:
+    def test_server_get(self, request, context_of_tests):
+        """
+        When sending get request to server url
+        It returns 200 status code
+        """
 
-    scenarios = [
-        # Fetch the default url for server node
-        ('Default Server Node url', dict(url='/browser/server/obj/'))
-    ]
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        """This function add the server to test the GET API"""
-        self.server_id = utils.create_server(self.server)
+        url = '/browser/server/obj/'
+
+        self.server_id = utils.create_server(context_of_tests['server'])
+        if not self.server_id:
+            raise Exception("Server not found to test GET API")
+
         server_dict = {"server_id": self.server_id}
         utils.write_node_info("sid", server_dict)
+        self.tester = context_of_tests['test_client']
 
-    def runTest(self):
-        """ This function will fetch the added servers to object browser. """
-        server_id = parent_node_dict["server"][-1]["server_id"]
-        if not server_id:
-            raise Exception("Server not found to test GET API")
-        response = self.tester.get(self.url + str(utils.SERVER_GROUP) + '/' +
-                                   str(server_id),
-                                   follow_redirects=True)
-        self.assertEquals(response.status_code, 200)
+        response = self.tester.get(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id),
+            follow_redirects=True)
+
+        response.status_code | should.be.equal.to(200)
 
     def tearDown(self):
-        """This function delete the server from SQLite """
         utils.delete_server_with_api(self.tester, self.server_id)

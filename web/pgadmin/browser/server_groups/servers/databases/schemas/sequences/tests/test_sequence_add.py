@@ -10,79 +10,66 @@
 import json
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 
 
-class SequenceAddTestCase(BaseTestGenerator):
-    """ This class will add new sequence(s) under schema node. """
-    skip_on_database = ['gpdb']
-    scenarios = [
-        # Fetching default URL for sequence node.
-        (
-            'Fetch sequence Node URL (valid optional data)',
-            dict(
-                url='/browser/sequence/obj/',
-                # Valid optional data
-                data={
-                    "cache": "1",
-                    "cycled": True,
-                    "increment": "1",
-                    "maximum": "100000",
-                    "minimum": "1",
-                    "name": "test_sequence_add_%s" % (str(uuid.uuid4())[1:8]),
-                    "securities": [],
-                    "start": "100"
-                }
-            )
-        ),
-        (
-            'Fetch sequence Node URL (invalid optional data)',
-            dict(
-                url='/browser/sequence/obj/',
-                # Optional fields should be int but we are passing empty str
-                data={
-                    "cache": "",
-                    "cycled": False,
-                    "increment": "",
-                    "maximum": "",
-                    "minimum": "",
-                    "name": "test_sequence_add_%s" % (str(uuid.uuid4())[1:8]),
-                    "securities": [],
-                    "start": ""
-                }
-            )
-        )
-    ]
+@pytest.mark.skip_databases(['gpdb'])
+class TestSequenceAdd:
+    def test_sequence_add(self, request, context_of_tests):
+        """
+        When the sequence add request is send to the backend
+        it returns 200 status
+        """
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        super(SequenceAddTestCase, self).setUp()
+        url = '/browser/sequence/obj/'
 
-    def runTest(self):
-        """This function will add sequence(s) under schema node."""
-        db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 self.server_id, self.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to add sequence.")
-        schema_id = schema_info["schema_id"]
-        schema_name = schema_info["schema_name"]
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_data = parent_node_dict['database'][-1]
+        self.server_id = self.server_data['server_id']
+        self.db_id = self.server_data['db_id']
+        self.db_name = self.server_data['db_name']
+
+        self.schema_info = parent_node_dict['schema'][-1]
+        self.schema_name = self.schema_info['schema_name']
+        self.schema_id = self.schema_info['schema_id']
+
+        db_con = database_utils.connect_database(self,
+                                                 utils.SERVER_GROUP,
+                                                 self.server_id,
+                                                 self.db_id)
+        if not db_con["info"] == "Database connected.":
+            raise Exception("Could not connect to database.")
+
         schema_response = schema_utils.verify_schemas(self.server,
-                                                      db_name,
-                                                      schema_name)
+                                                      self.db_name,
+                                                      self.schema_name)
         if not schema_response:
-            raise Exception("Could not find the schema to add sequence.")
-        db_user = self.server["username"]
+            raise Exception("Could not find the schema.")
 
-        common_data = {
+        sequence_name = "test_sequence_add_%s" % (str(uuid.uuid4())[1:8])
+        db_user = self.server["username"]
+        data = {
+            "cache": "1",
+            "cycled": True,
+            "increment": "1",
+            "maximum": "100000",
+            "minimum": "1",
+            "name": sequence_name,
+            "securities": [],
+            "start": "100",
             "relacl": [
                 {
                     "grantee": db_user,
@@ -107,20 +94,120 @@ class SequenceAddTestCase(BaseTestGenerator):
                         ]
                 }
             ],
-            "schema": schema_name,
+            "schema": self.schema_name,
             "seqowner": db_user,
         }
-
-        self.data.update(common_data)
-
         response = self.tester.post(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(self.server_id) + '/' + str(self.db_id) +
-            '/' + str(schema_id) + '/',
-            data=json.dumps(self.data),
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id) + '/' +
+            str(self.db_id) + '/' +
+            str(self.schema_id) + '/',
+            data=json.dumps(data),
             content_type='html/json')
-        self.assertEquals(response.status_code, 200)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        assert_json_values_from_response(
+            json_response,
+            'sequence',
+            'pgadmin.node.sequence',
+            False,
+            'icon-sequence',
+            sequence_name
+        )
+
+    def test_sequence_add_invalid(self, request, context_of_tests):
+            """
+            When the sequence add request is send to the backend
+            With invalid options
+            It returns 200 status
+            """
+            request.addfinalizer(self.tearDown)
+
+            url = '/browser/sequence/obj/'
+
+            self.tester = context_of_tests['test_client']
+            self.server = context_of_tests['server']
+            self.server_data = parent_node_dict['database'][-1]
+            self.server_id = self.server_data['server_id']
+            self.db_id = self.server_data['db_id']
+            self.db_name = self.server_data['db_name']
+
+            self.schema_info = parent_node_dict['schema'][-1]
+            self.schema_name = self.schema_info['schema_name']
+            self.schema_id = self.schema_info['schema_id']
+
+            db_con = database_utils.connect_database(self,
+                                                     utils.SERVER_GROUP,
+                                                     self.server_id,
+                                                     self.db_id)
+            if not db_con["info"] == "Database connected.":
+                raise Exception("Could not connect to database.")
+
+            schema_response = schema_utils.verify_schemas(self.server,
+                                                          self.db_name,
+                                                          self.schema_name)
+            if not schema_response:
+                raise Exception("Could not find the schema.")
+
+            sequence_name = "test_sequence_add_%s" % (str(uuid.uuid4())[1:8])
+            db_user = self.server["username"]
+            # Optional fields should be int but we are passing empty str
+            data = {
+                "cache": "",
+                "cycled": False,
+                "increment": "",
+                "maximum": "",
+                "minimum": "",
+                "name": sequence_name,
+                "securities": [],
+                "start": "",
+                "relacl": [
+                    {
+                        "grantee": db_user,
+                        "grantor": db_user,
+                        "privileges":
+                            [
+                                {
+                                    "privilege_type": "r",
+                                    "privilege": True,
+                                    "with_grant": True
+                                },
+                                {
+                                    "privilege_type": "w",
+                                    "privilege": True,
+                                    "with_grant": False
+                                },
+                                {
+                                    "privilege_type": "U",
+                                    "privilege": True,
+                                    "with_grant": False
+                                }
+                            ]
+                    }
+                ],
+                "schema": self.schema_name,
+                "seqowner": db_user,
+            }
+            response = self.tester.post(
+                url + str(utils.SERVER_GROUP) + '/' +
+                str(self.server_id) + '/' +
+                str(self.db_id) + '/' +
+                str(self.schema_id) + '/',
+                data=json.dumps(data),
+                content_type='html/json')
+
+            response.status_code | should.be.equal.to(200)
+            json_response = convert_response_to_json(response)
+            assert_json_values_from_response(
+                json_response,
+                'sequence',
+                'pgadmin.node.sequence',
+                False,
+                'icon-sequence',
+                sequence_name
+            )
 
     def tearDown(self):
-        # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        database_utils.client_disconnect_database(self.tester, self.server_id,
+                                                  self.db_id)

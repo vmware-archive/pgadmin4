@@ -15,6 +15,8 @@ import uuid
 import psycopg2
 import sqlite3
 from functools import partial
+
+import pytest
 from testtools.testcase import clone_test_with_new_id
 
 import config
@@ -38,37 +40,33 @@ def get_db_connection(db, username, password, host, port, sslmode="prefer"):
     return connection
 
 
-def login_tester_account(tester):
+def login_tester_account(http_client):
     """
     This function login the test client using env variables email and password
-    :param tester: test client
-    :type tester: flask test client object
+    :param http_client: test client
+    :type http_client: flask test client object
     :return: None
     """
     if os.environ['PGADMIN_SETUP_EMAIL'] and \
        os.environ['PGADMIN_SETUP_PASSWORD']:
         email = os.environ['PGADMIN_SETUP_EMAIL']
         password = os.environ['PGADMIN_SETUP_PASSWORD']
-        tester.post('/login', data=dict(email=email, password=password),
-                    follow_redirects=True)
+        http_client.post('/login', data=dict(email=email, password=password),
+                         follow_redirects=True)
     else:
-        from regression.runtests import app_starter
-        print("Unable to login test client, email and password not found.",
-              file=sys.stderr)
-        _cleanup(tester, app_starter)
-        sys.exit(1)
+        pytest.fail('Email and Password were not set in the environment')
 
 
-def logout_tester_account(tester):
+def logout_tester_account(http_client):
     """
     This function logout the test account
 
-    :param tester: test client
-    :type tester: flask test client object
+    :param http_client: test client
+    :type http_client: flask test client object
     :return: None
     """
 
-    response = tester.get('/logout')
+    http_client.get('/logout')
 
 
 def get_config_data():
@@ -458,12 +456,20 @@ def add_db_to_parent_node_dict(srv_id, db_id, test_db_name):
     })
 
 
-def add_schema_to_parent_node_dict(srv_id, db_id, schema_id, schema_name):
+def add_schema_to_parent_node_dict(srv_id,
+                                   db_password,
+                                   db_name,
+                                   db_id,
+                                   schema_id,
+                                   schema_name):
     """ This function stores the schema details into parent dict """
-    server_information = {"server_id": srv_id, "db_id": db_id,
-                          "schema_id": schema_id,
-                          "schema_name": schema_name}
-    regression.parent_node_dict["schema"].append(server_information)
+    server_information = {'server_id': srv_id,
+                          'db_name': db_name,
+                          'db_id': db_id,
+                          'schema_id': schema_id,
+                          'schema_name': schema_name,
+                          'db_password': db_password}
+    regression.parent_node_dict['schema'].append(server_information)
     return server_information
 
 
@@ -477,11 +483,11 @@ def create_parent_server_node(server_info):
     """
     srv_id = create_server(server_info)
     # Create database
-    test_db_name = "test_db_%s" % str(uuid.uuid4())[1:6]
+    test_db_name = 'test_db_%s' % str(uuid.uuid4())[1:6]
     db_id = create_database(server_info, test_db_name)
     add_db_to_parent_node_dict(srv_id, db_id, test_db_name)
     # Create schema
-    schema_name = "test_schema_%s" % str(uuid.uuid4())[1:6]
+    schema_name = 'test_schema_%s' % str(uuid.uuid4())[1:6]
     connection = get_db_connection(
         test_db_name,
         server_info['username'],
@@ -493,7 +499,12 @@ def create_parent_server_node(server_info):
 
     schema = regression.schema_utils.create_schema(connection, schema_name)
     return add_schema_to_parent_node_dict(
-        srv_id, db_id, schema[0], schema[1]
+        srv_id,
+        server_info['db_password'],
+        test_db_name,
+        db_id,
+        schema[0],
+        schema[1]
     )
 
 

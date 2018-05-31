@@ -10,47 +10,58 @@
 import os
 
 import jinja2
-from regression.python_test_utils.sql_template_test_base import \
-    SQLTemplateTestBase
+import pytest
+from grappa import should
+
+from regression.python_test_utils import test_utils
 from regression.python_test_utils.template_helper import file_as_template
 
 
-class TestTriggerGetOidSql(SQLTemplateTestBase):
-    scenarios = [
-        ('Test Trigger to retrieve OID SQL file', dict())
-    ]
+@pytest.mark.database
+class TestTriggerGetOidSql:
+    def test_column_acl_sql(self, context_of_tests):
+        """
+        When all parameters are present
+        It correctly generates the SQL
+        And executes against the database
+        """
+        server = context_of_tests['server']
+        with test_utils.Database(server) as (connection, database_name):
+            test_utils.create_table(server, database_name, 'test_table')
 
-    def __init__(self):
-        super(TestTriggerGetOidSql, self).__init__()
-        self.table_id = -1
-        self.column_id = -1
+            if connection.server_version < 90100:
+                versions_to_test = ['default']
+            else:
+                versions_to_test = ['9.1_plus']
 
-    def test_setup(self, connection, cursor):
-        cursor.execute("SELECT pg_class.oid AS table_id, "
-                       "pg_attribute.attnum AS column_id "
-                       "FROM pg_class JOIN pg_attribute ON "
-                       "attrelid=pg_class.oid "
-                       "WHERE pg_class.relname='test_table'"
-                       " AND pg_attribute.attname = 'some_column'")
-        self.table_id, self.column_id = cursor.fetchone()
+            cursor = connection.cursor()
+            cursor.execute("SELECT pg_class.oid AS table_id, "
+                           "pg_attribute.attnum AS column_id "
+                           "FROM pg_class JOIN pg_attribute ON "
+                           "attrelid=pg_class.oid "
+                           "WHERE pg_class.relname='test_table'"
+                           " AND pg_attribute.attname = 'some_column'")
+            table_id, column_id = cursor.fetchone()
 
-    def generate_sql(self, version):
-        template_file = self.get_template_file(version, "get_oid.sql")
-        jinja2.filters.FILTERS['qtLiteral'] = lambda value: "NULL"
-        template = file_as_template(template_file)
+            for version in versions_to_test:
+                template_file = self.get_template_file(version, 'get_oid.sql')
+                jinja2.filters.FILTERS['qtLiteral'] = lambda value: 'NULL'
+                template = file_as_template(template_file)
 
-        sql = template.render(data={'name': None},
-                              tid=self.table_id
-                              )
+                sql = template.render(
+                    data={'name': None},
+                    tid=table_id
+                )
 
-        return sql
+                cursor = connection.cursor()
+                cursor.execute(sql)
+                fetch_result = cursor.fetchall()
 
-    def assertions(self, fetch_result, descriptions):
-        self.assertEqual(0, len(fetch_result))
+                fetch_result | should.be.empty
 
     @staticmethod
     def get_template_file(version, filename):
         return os.path.join(
-            os.path.dirname(__file__), "..", "templates", "trigger", "sql",
+            os.path.dirname(__file__), '..', 'templates', 'trigger', 'sql',
             version, filename
         )

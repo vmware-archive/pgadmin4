@@ -6,78 +6,67 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+from grappa import should
 
-from pgadmin.utils.route import BaseTestGenerator
 from pgadmin.browser.utils import is_version_in_range
 
 
-class VersionInRangeTestCase(BaseTestGenerator):
-    """
-    This class validates the version in range functionality
-    by defining different version scenarios; where dict of
-    parameters describes the scenario appended by test name.
-    """
+class TestVersionInRange(object):
+    def test_version_in_range_pg8_23(self):
+        """
+        When Validating pgversion 8.23
+        And the min_version is 91000
+        It should return false
+        """
 
-    scenarios = [
-        (
-            'TestCase for Validating pgversion 8.23 and min_version is 91000, '
-            'it should not show', dict(
-                sversion=82300,
-                min_version=90100,
-                max_version=1000000000,
-                scenario=2
-            )),
-        (
-            'TestCase for Validating pgversion 9.2, '
-            'it should show by default', dict(
-                sversion=90200,
-                min_version=0,
-                max_version=1000000000,
-                scenario=1
-            )),
-        (
-            'TestCase for Validating pgversion 9.2 and min/max are None, '
-            'it should show by default', dict(
-                sversion=90200,
-                min_version=None,
-                max_version=None,
-                scenario=1
-            )),
-        (
-            'TestCase for Validating pgversion 9.6 and max is lower, '
-            'it should not show', dict(
-                sversion=90600,
-                min_version=None,
-                max_version=90400,
-                scenario=2
-            ))
-    ]
-
-    @classmethod
-    def setUpClass(cls):
-        pass
-
-    def runTest(self):
-        """This function will check version in range functionality."""
-        if self.scenario == 1:
-            self.test_result_is_true()
-        if self.scenario == 2:
-            self.test_result_is_false()
-
-    def test_result_is_true(self):
-        self.assertTrue(
-            is_version_in_range(
-                self.sversion,
-                self.min_version,
-                self.max_version
-            )
+        result = is_version_in_range(
+            82300,
+            90100,
+            1000000000
         )
 
-    def test_result_is_false(self):
-        self.assertFalse(
-            is_version_in_range(
-                self.sversion,
-                self.min_version,
-                self.max_version
-            )
+        result | should.be.false
+
+    def test_version_in_range_pg9_2(self):
+        """
+        When Validating pgversion 9.2
+        It should return true
+        """
+
+        result = is_version_in_range(
+            90200,
+            0,
+            1000000000,
         )
+
+        result | should.be.true
+
+    def test_version_in_range_pg9_none(self):
+        """
+        When Validating pgversion 9.2
+        And the min/max are None
+        It should return true
+        """
+
+        result = is_version_in_range(
+            90200,
+            None,
+            None,
+        )
+
+        result | should.be.true
+
+    def test_version_in_range_pg9_6_lower_max(self):
+        """
+        When Validating pgversion 9.6
+        And the max is lower
+        It should return false
+        """
+
+        result = is_version_in_range(
+            90600,
+            None,
+            90400,
+        )
+
+        result | should.be.false

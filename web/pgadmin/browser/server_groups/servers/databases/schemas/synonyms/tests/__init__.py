@@ -7,7 +7,7 @@
 #
 ##########################################################################
 
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 
 
 class SynonymTestGenerator(BaseTestGenerator):

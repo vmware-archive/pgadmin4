@@ -6,38 +6,22 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+import pytest
+from grappa import should
+
+from regression.python_test_utils import test_utils
 
 
-from pgadmin.utils.route import BaseTestGenerator
-from regression.python_test_utils import test_utils as utils
-
-
-class LogoutTest(BaseTestGenerator):
-    """
-    This class verifies the logout functionality; provided the user is already
-    logged-in. Dictionary parameters define the scenario appended by test
-    name.
-    """
-
-    scenarios = [
-        # This test case validate the logout page
-        ('Logging Out', dict(respdata='Redirecting...'))
-    ]
-
-    @classmethod
-    def setUpClass(cls):
-        pass
-
-    def runTest(self):
-        """This function checks the logout functionality."""
-
-        response = self.tester.get('/logout')
-        self.assertTrue(self.respdata in response.data.decode('utf8'))
-
-    @classmethod
-    def tearDownClass(cls):
+@pytest.mark.skip_if_not_in_server_mode
+class TestLogout(object):
+    def test_success(self, request, context_of_tests):
         """
-        We need to again login the test client as soon as test scenarios
-        finishes.
+        When trying to logout
+        And the credential are correct
+        It returns "Specified user does not exist" error
         """
-        utils.login_tester_account(cls.tester)
+        http_client = context_of_tests['test_client']
+        response = http_client.get('/logout')
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+        response.data.decode('utf8') | should.contain('Redirecting...')

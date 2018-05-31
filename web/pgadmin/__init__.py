@@ -217,6 +217,8 @@ def create_app(app_name=None):
         'PGADMIN_TESTING_MODE' in os.environ and
         os.environ['PGADMIN_TESTING_MODE'] == '1'
     ):
+        from pgadmin.model import SCHEMA_VERSION
+        config.SETTINGS_SCHEMA_VERSION = SCHEMA_VERSION
         config.SQLITE_PATH = config.TEST_SQLITE_PATH
 
     # Ensure the various working directories exist

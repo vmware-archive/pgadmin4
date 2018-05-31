@@ -9,62 +9,76 @@
 
 import uuid
 
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as domain_utils
 
 
-class DomainGetTestCase(BaseTestGenerator):
-    """ This class will fetch new collation under schema node. """
-    scenarios = [
-        # Fetching default URL for domain node.
-        ('Fetch domain Node URL', dict(url='/browser/domain/obj/'))
-    ]
+class TestDomainGet:
+    def test_domain_get(self, request, context_of_tests):
+        """
+        When the domain get request is send to the backend
+        it returns 200 status
+        """
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        self.database_info = parent_node_dict["database"][-1]
-        self.db_name = self.database_info["db_name"]
-        self.schema_info = parent_node_dict["schema"][-1]
-        self.schema_name = self.schema_info["schema_name"]
-        self.schema_id = self.schema_info["schema_id"]
-        self.domain_name = "domain_get_%s" % (str(uuid.uuid4())[1:8])
+        url = '/browser/domain/obj/'
+
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_data = parent_node_dict['database'][-1]
+        self.server_id = self.server_data['server_id']
+        self.db_id = self.server_data['db_id']
+        self.db_name = self.server_data['db_name']
+
+        self.schema_info = parent_node_dict['schema'][-1]
+        self.schema_name = self.schema_info['schema_name']
+        self.schema_id = self.schema_info['schema_id']
+
+        db_con = database_utils.connect_database(self,
+                                                 utils.SERVER_GROUP,
+                                                 self.server_id,
+                                                 self.db_id)
+        if not db_con["info"] == "Database connected.":
+            raise Exception("Could not connect to database.")
+
+        schema_response = schema_utils.verify_schemas(self.server,
+                                                      self.db_name,
+                                                      self.schema_name)
+        if not schema_response:
+            raise Exception("Could not find the schema to add the domain.")
+
+        domain_name = "domain_delete_%s" % (str(uuid.uuid4())[1:8])
         self.domain_info = domain_utils.create_domain(self.server,
                                                       self.db_name,
                                                       self.schema_name,
                                                       self.schema_id,
-                                                      self.domain_name)
+                                                      domain_name)
 
-    def runTest(self):
-        """ This function will add domain under schema node. """
-        db_id = self.database_info["db_id"]
-        server_id = self.database_info["server_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 server_id, db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to get the domain.")
-        db_name = self.database_info["db_name"]
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      db_name,
-                                                      self.schema_name)
-        if not schema_response:
-            raise Exception("Could not find the schema to get the domain.")
         domain_id = self.domain_info[0]
-        # Call GET API to verify the domain
-        get_response = self.tester.get(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(server_id) + '/' +
-            str(db_id) + '/' +
+        response = self.tester.get(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id) + '/' +
+            str(self.db_id) + '/' +
             str(self.schema_id) + '/' +
             str(domain_id),
             content_type='html/json')
-        self.assertEquals(get_response.status_code, 200)
-        # Disconnect the database
-        database_utils.disconnect_database(self, server_id, db_id)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('oid')
+        json_response | should.have.key('description') > should.be.none
+        json_response | should.have.key('name') > should.be\
+            .equal(domain_name)
 
     def tearDown(self):
-        pass
+        database_utils.client_disconnect_database(self.tester, self.server_id,
+                                                  self.db_id)

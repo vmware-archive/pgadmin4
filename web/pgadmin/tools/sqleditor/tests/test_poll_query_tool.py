@@ -9,20 +9,44 @@
 
 import json
 
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 
 
-class TestPollQueryTool(BaseTestGenerator):
-    """ This class will test the query tool polling. """
-    scenarios = [
-        ('When query tool polling returns messages with result data-set',
-         dict(
-             sql=[
-                 """
+class TestPollQueryTool:
+    def test_poll_and_have_2_notices(self, context_of_tests):
+        """
+        When query tool poll to check on the query with 2 notices
+        It returns messages saying polling is checking
+        """
+        database_info = context_of_tests["server_information"]
+        server_id = database_info["server_id"]
+        db_id = database_info["db_id"]
+
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+
+        db_con = database_utils.client_connect_database(
+            http_client,
+            utils.SERVER_GROUP,
+            server_id,
+            db_id,
+            server['db_password'])
+        if not db_con["info"] == "Database connected.":
+            raise Exception("Could not connect to the database.")
+
+        url = '/datagrid/initialize/query_tool/{0}/{1}/{2}'.format(
+            utils.SERVER_GROUP, server_id, db_id)
+        response = http_client.post(url)
+        response.status_code | should.be.equal(200)
+
+        response_data = json.loads(response.data.decode('utf-8'))
+        trans_id = response_data['data']['gridTransId']
+
+        sql = """
 DROP TABLE IF EXISTS test_for_notices;
 
 DO $$
@@ -31,8 +55,64 @@ BEGIN
 END $$;
 
 SELECT 'CHECKING POLLING';
-""",
-                 """
+"""
+        expected_message = """NOTICE:  table "test_for_notices" does not exist, skipping
+NOTICE:  Hello, world!
+"""
+        expected_result = 'CHECKING POLLING'
+
+        url = '/sqleditor/query_tool/start/{0}'.format(trans_id)
+        response = http_client.post(url, data=json.dumps({"sql": sql}),
+                                    content_type='html/json')
+
+        response.status_code | should.be.equal(200)
+
+        url = '/sqleditor/poll/{0}'.format(trans_id)
+        response = http_client.get(url)
+        response.status_code | should.be.equal(200)
+
+        response_data = json.loads(response.data.decode('utf-8'))
+
+        response_data['data']['additional_messages'] | should.be.equal(
+            expected_message
+        )
+
+        expected_result | should.be.equal(
+            response_data['data']['result'][0][0])
+
+        database_utils.client_disconnect_database(http_client, server_id,
+                                                  db_id)
+
+    def test_poll_and_have_1000_notices(self, context_of_tests):
+        """
+        When query tool poll to check on the query with 1000 notices
+        It returns messages saying polling is checking for long messages
+        """
+        database_info = context_of_tests["server_information"]
+        server_id = database_info["server_id"]
+        db_id = database_info["db_id"]
+
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+
+        db_con = database_utils.client_connect_database(
+            http_client,
+            utils.SERVER_GROUP,
+            server_id,
+            db_id,
+            server['db_password'])
+        if not db_con["info"] == "Database connected.":
+            raise Exception("Could not connect to the database.")
+
+        url = '/datagrid/initialize/query_tool/{0}/{1}/{2}'.format(
+            utils.SERVER_GROUP, server_id, db_id)
+        response = http_client.post(url)
+        response.status_code | should.be.equal(200)
+
+        response_data = json.loads(response.data.decode('utf-8'))
+        trans_id = response_data['data']['gridTransId']
+
+        sql = """
 DO $$
 BEGIN
     FOR i in 1..1000 LOOP
@@ -41,74 +121,81 @@ BEGIN
 END $$;
 
 SELECT 'CHECKING POLLING FOR LONG MESSAGES';
-""",
-                 "SELECT 'CHECKING POLLING WITHOUT MESSAGES';"
-             ],
-             expected_message=['NOTICE:  table "test_for_notices" ' +
-                               """does not exist, skipping
-NOTICE:  Hello, world!
-""",
-                               "\n".join(["NOTICE:  Count is {0}".format(i)
-                                          for i in range(1, 1001)]) + "\n",
-                               None],
-             expected_result=['CHECKING POLLING',
-                              'CHECKING POLLING FOR LONG MESSAGES',
-                              'CHECKING POLLING WITHOUT MESSAGES'],
-             print_messages=['2 NOTICES WITH DATASET',
-                             '1000 NOTICES WITH DATASET',
-                             'NO NOTICE WITH DATASET'
-                             ]
-         ))
-    ]
+"""
+        expected_message = "\n".join(["NOTICE:  Count is {0}".format(i)
+                                      for i in range(1, 1001)]) + "\n"
+        expected_result = 'CHECKING POLLING FOR LONG MESSAGES'
 
-    def runTest(self):
-        """ This function will check messages return by query tool polling. """
-        database_info = parent_node_dict["database"][-1]
-        self.server_id = database_info["server_id"]
+        url = '/sqleditor/query_tool/start/{0}'.format(trans_id)
+        response = http_client.post(url, data=json.dumps({"sql": sql}),
+                                    content_type='html/json')
 
-        self.db_id = database_info["db_id"]
-        db_con = database_utils.connect_database(self,
-                                                 utils.SERVER_GROUP,
-                                                 self.server_id,
-                                                 self.db_id)
+        response.status_code | should.be.equal(200)
+
+        url = '/sqleditor/poll/{0}'.format(trans_id)
+        response = http_client.get(url)
+        response.status_code | should.be.equal(200)
+
+        response_data = json.loads(response.data.decode('utf-8'))
+
+        response_data['data']['additional_messages'] | should.be.equal(
+            expected_message
+        )
+
+        expected_result | should.be.equal(
+            response_data['data']['result'][0][0])
+
+        database_utils.client_disconnect_database(http_client, server_id,
+                                                  db_id)
+
+    def test_poll_and_have_no_notices(self, context_of_tests):
+        """
+        When query tool poll to check on the query with no notices
+        It returns messages saying polling is checking without messages
+        """
+        database_info = context_of_tests["server_information"]
+        server_id = database_info["server_id"]
+        db_id = database_info["db_id"]
+
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+
+        db_con = database_utils.client_connect_database(
+            http_client,
+            utils.SERVER_GROUP,
+            server_id,
+            db_id,
+            server['db_password'])
         if not db_con["info"] == "Database connected.":
             raise Exception("Could not connect to the database.")
 
-        # Initialize query tool
         url = '/datagrid/initialize/query_tool/{0}/{1}/{2}'.format(
-            utils.SERVER_GROUP, self.server_id, self.db_id)
-        response = self.tester.post(url)
-        self.assertEquals(response.status_code, 200)
+            utils.SERVER_GROUP, server_id, db_id)
+        response = http_client.post(url)
+        response.status_code | should.be.equal(200)
 
         response_data = json.loads(response.data.decode('utf-8'))
-        self.trans_id = response_data['data']['gridTransId']
+        trans_id = response_data['data']['gridTransId']
 
-        cnt = 0
-        for s in self.sql:
-            print("Executing and polling with: " + self.print_messages[cnt])
-            # Start query tool transaction
-            url = '/sqleditor/query_tool/start/{0}'.format(self.trans_id)
-            response = self.tester.post(url, data=json.dumps({"sql": s}),
-                                        content_type='html/json')
+        sql = "SELECT 'CHECKING POLLING WITHOUT MESSAGES';"
+        expected_result = 'CHECKING POLLING WITHOUT MESSAGES'
 
-            self.assertEquals(response.status_code, 200)
+        url = '/sqleditor/query_tool/start/{0}'.format(trans_id)
+        response = http_client.post(url, data=json.dumps({"sql": sql}),
+                                    content_type='html/json')
 
-            # Query tool polling
-            url = '/sqleditor/poll/{0}'.format(self.trans_id)
-            response = self.tester.get(url)
-            self.assertEquals(response.status_code, 200)
-            response_data = json.loads(response.data.decode('utf-8'))
+        response.status_code | should.be.equal(200)
 
-            if self.expected_message[cnt] is not None:
-                # Check the returned messages
-                self.assertIn(self.expected_message[cnt],
-                              response_data['data']['additional_messages'])
+        url = '/sqleditor/poll/{0}'.format(trans_id)
+        response = http_client.get(url)
+        response.status_code | should.be.equal(200)
 
-            # Check the output
-            self.assertEquals(self.expected_result[cnt],
-                              response_data['data']['result'][0][0])
+        response_data = json.loads(response.data.decode('utf-8'))
 
-            cnt += 1
+        response_data['data']['additional_messages'] | should.be.none
 
-        # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        expected_result | should.be.equal(
+            response_data['data']['result'][0][0])
+
+        database_utils.client_disconnect_database(http_client, server_id,
+                                                  db_id)

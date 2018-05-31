@@ -9,24 +9,21 @@
 
 from __future__ import print_function
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.tests_helper import ClientTestBaseClass
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as cast_utils
 
 
-class CastsDeleteTestCase(BaseTestGenerator):
-    """ This class will delete the cast node added under database node. """
-    skip_on_database = ['gpdb']
-    scenarios = [
-        # Fetching default URL for cast node.
-        ('Check Cast Node', dict(url='/browser/cast/obj/'))
-    ]
-
-    def setUp(self):
-        super(CastsDeleteTestCase, self).setUp()
+@pytest.mark.skip_databases(['gpdb'])
+class TestCastsDelete(ClientTestBaseClass):
+    @pytest.fixture(autouse=True)
+    def setUp(self, the_real_setup):
         self.default_db = self.server["db"]
         self.database_info = parent_node_dict['database'][-1]
         self.db_name = self.database_info['db_name']
@@ -36,8 +33,13 @@ class CastsDeleteTestCase(BaseTestGenerator):
         self.cast_id = cast_utils.create_cast(self.server, self.source_type,
                                               self.target_type)
 
-    def runTest(self):
-        """ This function will delete added cast."""
+    def test_cast_delete(self):
+        """
+        When a cast exits
+         When remove request is sent to the backend,
+         It gets removed from the database
+          And return 200 status"""
+        url = '/browser/cast/obj/'
         self.server_id = self.database_info["server_id"]
         self.db_id = self.database_info['db_id']
         db_con = database_utils.connect_database(self,
@@ -57,11 +59,11 @@ class CastsDeleteTestCase(BaseTestGenerator):
         if len(response) == 0:
             raise Exception("Could not find cast.")
         delete_response = self.tester.delete(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(self.db_id) +
             '/' + str(self.cast_id),
             follow_redirects=True)
-        self.assertEquals(delete_response.status_code, 200)
+        delete_response.status_code | should.be.equal.to(200)
 
     def tearDown(self):
         """This function will disconnect test database."""

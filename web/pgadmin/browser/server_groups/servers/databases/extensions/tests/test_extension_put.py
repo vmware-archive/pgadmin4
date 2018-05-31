@@ -11,24 +11,24 @@ from __future__ import print_function
 
 import json
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.tests_helper import ClientTestBaseClass
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as extension_utils
 
 
-class ExtensionsPutTestCase(BaseTestGenerator):
-    skip_on_database = ['gpdb']
-    scenarios = [
-        # Fetching default URL for extension node.
-        ('Check Extension Node', dict(url='/browser/extension/obj/'))
-    ]
-
-    def setUp(self):
-        """ This function will create extension."""
-        super(ExtensionsPutTestCase, self).setUp()
+@pytest.mark.skip_databases(['gpdb'])
+class TestExtensionsPut(ClientTestBaseClass):
+    def test_extensions_put(self):
+        """
+        When PUT request is sent to the backend
+        it returns 200 status"""
+        url = '/browser/extension/obj/'
         self.schema_data = parent_node_dict['schema'][-1]
         self.server_id = self.schema_data['server_id']
         self.db_id = self.schema_data['db_id']
@@ -38,8 +38,6 @@ class ExtensionsPutTestCase(BaseTestGenerator):
         self.extension_id = extension_utils.create_extension(
             self.server, self.db_name, self.extension_name, self.schema_name)
 
-    def runTest(self):
-        """ This function will update extension added under test database. """
         db_con = database_utils.connect_database(self,
                                                  utils.SERVER_GROUP,
                                                  self.server_id,
@@ -54,14 +52,22 @@ class ExtensionsPutTestCase(BaseTestGenerator):
             "schema": "public",
             "id": self.extension_id
         }
-        put_response = self.tester.put(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+        response = self.tester.put(
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(
                 self.db_id) +
             '/' + str(self.extension_id),
             data=json.dumps(data),
             follow_redirects=True)
-        self.assertEquals(put_response.status_code, 200)
+        response.status_code | should.be.equal.to(200)
+
+        json_response = self.response_to_json(response)
+        self.assert_node_json(json_response,
+                              'extension',
+                              'pgadmin.node.extension',
+                              False,
+                              'icon-extension',
+                              'cube')
 
     def tearDown(self):
         """This function disconnect the test database and drop added

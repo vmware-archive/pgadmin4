@@ -10,28 +10,29 @@
 import os
 import sys
 
+from grappa import should
+
 from pgadmin.utils.driver import DriverRegistry
 from regression.python_test_utils.template_helper import file_as_template
 
 DriverRegistry.load_drivers()
-from pgadmin.utils.route import BaseTestGenerator
 from regression.python_test_utils import test_utils
 
 if sys.version_info[0] >= 3:
     long = int
 
 
-class TestColumnForeignKeyGetConstraintCols(BaseTestGenerator):
-    scenarios = [
-        ("Test foreign key get constraint with no foreign key properties on"
-         " the column", dict())
-    ]
+class TestColumnForeignKeyGetConstraintCols:
+    def test_column_foreign_keys(self, context_of_tests):
+        """
+        When there are no foreign key properties on the column
+        it returns an empty result
+        """
 
-    def runTest(self):
-        """ When there are no foreign key properties on the column, it returns
-        an empty result """
-        with test_utils.Database(self.server) as (connection, database_name):
-            test_utils.create_table(self.server, database_name, "test_table")
+        server = context_of_tests['server']
+
+        with test_utils.Database(server) as (connection, database_name):
+            test_utils.create_table(server, database_name, "test_table")
 
             cursor = connection.cursor()
             cursor.execute("SELECT pg_class.oid as table_id, "
@@ -43,22 +44,22 @@ class TestColumnForeignKeyGetConstraintCols(BaseTestGenerator):
             table_id, column_id = cursor.fetchone()
 
             if connection.server_version < 90100:
-                self.versions_to_test = ['default']
+                versions_to_test = 'default'
             else:
-                self.versions_to_test = ['9.1_plus']
+                versions_to_test = '9.1_plus'
 
-            for version in self.versions_to_test:
-                template_file = os.path.join(
-                    os.path.dirname(__file__), "..", version,
-                    "properties.sql"
-                )
-                template = file_as_template(template_file)
+            template_file = os.path.join(
+                os.path.dirname(__file__), "..", versions_to_test,
+                "properties.sql"
+            )
+            template = file_as_template(template_file)
 
-                sql = template.render(
-                    tid=table_id,
-                    cid=column_id)
+            sql = template.render(
+                tid=table_id,
+                cid=column_id)
 
-                cursor = connection.cursor()
-                cursor.execute(sql)
-                fetch_result = cursor.fetchall()
-                self.assertEqual(0, len(fetch_result))
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            fetch_result = cursor.fetchall()
+
+            fetch_result | should.have.length.of(0)

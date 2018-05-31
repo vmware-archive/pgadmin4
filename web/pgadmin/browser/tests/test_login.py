@@ -9,99 +9,127 @@
 
 import uuid
 
-from pgadmin.utils.route import BaseTestGenerator
-from regression.python_test_utils import test_utils as utils
+import pytest
+from grappa import should
+
+from regression.python_test_utils import test_utils
 from regression.test_setup import config_data
 
 
-class LoginTestCase(BaseTestGenerator):
-    """
-    This class checks login functionality by validating different scenarios.
-    Login scenarios are defined in dictionary; where dict of parameters
-    describe the scenario appended by test name.
-    """
-
-    scenarios = [
-        # This test case validates the invalid/incorrect password
-        ('TestCase for Checking Invalid_Password', dict(
-            email=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_username']),
-            password=str(uuid.uuid4())[4:8],
-            respdata='Invalid password')),
-
-        # This test case validates the empty password field
-        ('Empty_Password', dict(
-            email=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_username']), password='',
-            respdata='Password not provided')),
-
-        # This test case validates blank email field
-        ('Empty_Email', dict(
-            email='', password=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_password']),
-            respdata='Email not provided')),
-
-        # This test case validates empty email and password
-        ('Empty_Credentials', dict(
-            email='', password='',
-            respdata='Email not provided')),
-
-        # This test case validates the invalid/incorrect email id
-        ('Invalid_Email', dict(
-            email=str(uuid.uuid4())[1:8] + '@xyz.com',
-            password=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_password']),
-            respdata='Specified user does not exist')),
-
-        # This test case validates invalid email and password
-        ('Invalid_Credentials', dict(
-            email=str(uuid.uuid4())[1:8] + '@xyz.com',
-            password=str(uuid.uuid4())[4:8],
-            respdata='Specified user does not exist')),
-
-        # This test case validates the valid/correct credentials and allow user
-        # to login pgAdmin 4
-        ('Valid_Credentials', dict(
-            email=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_username']),
-            password=(
-                config_data['pgAdmin4_login_credentials']
-                ['login_password']),
-            respdata='Gravatar image for %s' %
-                     config_data['pgAdmin4_login_credentials']
-                     ['login_username']))
-    ]
-
-    @classmethod
-    def setUpClass(cls):
+@pytest.mark.skip_if_not_in_server_mode
+class TestLogin(object):
+    def test_incorrect_password(self, request, context_of_tests):
         """
-        We need to logout the test client as we are testing scenarios of
-        logging in the client like invalid password, invalid emails,
-        empty credentials etc.
+        When trying to login
+        And password is invalid
+        It returns "Invalid password" error
         """
-        utils.logout_tester_account(cls.tester)
+        http_client = context_of_tests['test_client']
 
-    def runTest(self):
-        """This function checks login functionality."""
-        response = self.tester.post(
+        test_utils.logout_tester_account(http_client)
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+
+        response = http_client.post(
             '/login',
             data=dict(
-                email=self.email,
-                password=self.password
+                email=config_data['pgAdmin4_login_credentials']
+                ['login_username'],
+                password=str(uuid.uuid4())[4:8]
             ),
             follow_redirects=True
         )
-        self.assertTrue(self.respdata in response.data.decode('utf8'))
+        response.data.decode('utf8') | should.contain('Invalid password')
 
-    @classmethod
-    def tearDownClass(cls):
+    def test_empty_email(self, request, context_of_tests):
         """
-        We need to again login the test client as soon as test scenarios
-        finishes.
+        When trying to login
+        And email is empty
+        It returns "Email not provided" error
         """
-        utils.login_tester_account(cls.tester)
+        http_client = context_of_tests['test_client']
+
+        test_utils.logout_tester_account(http_client)
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+
+        response = http_client.post(
+            '/login',
+            data=dict(
+                email='',
+                password=str(uuid.uuid4())[4:8]
+            ),
+            follow_redirects=True
+        )
+        response.data.decode('utf8') | should.contain('Email not provided')
+
+    def test_empty_password(self, request, context_of_tests):
+        """
+        When trying to login
+        And password is empty
+        It returns "Password not provided" error
+        """
+        http_client = context_of_tests['test_client']
+
+        test_utils.logout_tester_account(http_client)
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+
+        response = http_client.post(
+            '/login',
+            data=dict(
+                email=str(uuid.uuid4())[4:8],
+                password=''
+            ),
+            follow_redirects=True
+        )
+        response.data.decode('utf8') | should.contain('Password not provided')
+
+    def test_user_not_found(self, request, context_of_tests):
+        """
+        When trying to login
+        And the user does not exist
+        It returns "Specified user does not exist" error
+        """
+        http_client = context_of_tests['test_client']
+
+        test_utils.logout_tester_account(http_client)
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+
+        response = http_client.post(
+            '/login',
+            data=dict(
+                email=str(uuid.uuid4())[4:8] + '@xyz.com',
+                password=str(uuid.uuid4())[4:8]
+            ),
+            follow_redirects=True
+        )
+        response.data.decode('utf8') | should.contain(
+            'Specified user does not exist')
+
+    def test_success(self, request, context_of_tests):
+        """
+        When trying to login
+        And the credential are correct
+        It returns "Specified user does not exist" error
+        """
+        http_client = context_of_tests['test_client']
+
+        test_utils.logout_tester_account(http_client)
+        request.addfinalizer(lambda: test_utils
+                             .login_tester_account(http_client))
+
+        response = http_client.post(
+            '/login',
+            data=dict(
+                email=config_data['pgAdmin4_login_credentials']
+                ['login_username'],
+                password=config_data['pgAdmin4_login_credentials']
+                ['login_password']
+            ),
+            follow_redirects=True
+        )
+        response.data.decode('utf8') | should.contain(
+            'Gravatar image for %s' % config_data['pgAdmin4_login_credentials']
+                                                 ['login_username'])

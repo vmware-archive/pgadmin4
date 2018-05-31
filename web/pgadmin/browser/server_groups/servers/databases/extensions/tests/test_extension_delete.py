@@ -9,24 +9,25 @@
 
 from __future__ import print_function
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.tests_helper import ClientTestBaseClass
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as extension_utils
 
 
-class ExtensionsDeleteTestCase(BaseTestGenerator):
-    skip_on_database = ['gpdb']
-    scenarios = [
-        # Fetching default URL for extension node.
-        ('Check Extension Node', dict(url='/browser/extension/obj/'))
-    ]
+@pytest.mark.skip_databases(['gpdb'])
+class TestExtensionsDelete(ClientTestBaseClass):
+    def test_delete_extension(self):
+        """
+        When deletion request in sent to the backend
+        it returns 200 status """
 
-    def setUp(self):
-        """ This function will create extension."""
-        super(ExtensionsDeleteTestCase, self).setUp()
+        url = '/browser/extension/obj/'
         self.schema_data = parent_node_dict['schema'][-1]
         self.server_id = self.schema_data['server_id']
         self.db_id = self.schema_data['db_id']
@@ -36,8 +37,6 @@ class ExtensionsDeleteTestCase(BaseTestGenerator):
         self.extension_id = extension_utils.create_extension(
             self.server, self.db_name, self.extension_name, self.schema_name)
 
-    def runTest(self):
-        """ This function will delete extension added test database. """
         db_con = database_utils.connect_database(self,
                                                  utils.SERVER_GROUP,
                                                  self.server_id,
@@ -48,12 +47,20 @@ class ExtensionsDeleteTestCase(BaseTestGenerator):
                                                     self.extension_name)
         if not response:
             raise Exception("Could not find extension.")
-        delete_response = self.tester.delete(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+        response = self.tester.delete(
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(self.db_id) +
             '/' + str(self.extension_id),
             follow_redirects=True)
-        self.assertEquals(delete_response.status_code, 200)
+        response.status_code | should.be.equal.to(200)
+
+        json_response = self.response_to_json(response)
+        json_response | should.have.key('info') > should.be.equal.to(
+            'Extension dropped')
+        json_response | should.have.key('errormsg') > should.be.empty
+        json_response | should.have.key('data')
+        json_response | should.have.key('result') > should.be.none
+        json_response | should.have.key('success') > should.be.equal.to(1)
 
     def tearDown(self):
         """This function disconnect the test database. """

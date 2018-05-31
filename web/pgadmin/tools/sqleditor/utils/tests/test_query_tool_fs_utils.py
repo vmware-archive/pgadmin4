@@ -7,39 +7,31 @@
 #
 ##########################################################################
 import os
-from pgadmin.utils.route import BaseTestGenerator
+
+from grappa import should
+
 from pgadmin.tools.sqleditor.utils.query_tool_fs_utils import \
     read_file_generator
 
 
-class TestReadFileGeneratorForEncoding(BaseTestGenerator):
-    """
-    Check that the start_running_query method works as intended
-    """
+class TestReadFileGeneratorForEncoding:
+    def test_load_utf8_encoding(self):
+        """
+        When a user is trying to load the file with utf-8 encoding
+        It returns 'SELECT 1'
+        """
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        complete_path = os.path.join(dir_path, 'test_file_utf8_encoding.sql')
+        result = read_file_generator(complete_path, 'utf-8')
+        next(result) | should.be.contain('SELECT 1')
 
-    scenarios = [
-        (
-            'When user is trying to load the file with utf-8 encoding',
-            dict(
-                file='test_file_utf8_encoding.sql',
-                encoding='utf-8'
-            )
-        ),
-        (
-            'When user is trying to load the file with other encoding and'
-            ' trying to use utf-8 encoding to read it',
-            dict(
-                file='test_file_other_encoding.sql',
-                encoding='utf-8'
-            )
-        ),
-    ]
-
-    def setUp(self):
-        self.dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.complate_path = os.path.join(self.dir_path, self.file)
-
-    def runTest(self):
-        result = read_file_generator(self.complate_path, self.encoding)
-        # Check if file is read properly by the generator
-        self.assertIn('SELECT 1', next(result))
+    def test_load_other_encoding(self):
+        """
+        When user is trying to load the file with other encoding
+        And trying to use utf-8 encoding to read it
+        It returns 'SELECT 1'
+        """
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        complete_path = os.path.join(dir_path, 'test_file_other_encoding.sql')
+        result = read_file_generator(complete_path, 'utf-8')
+        next(result) | should.be.contain('SELECT 1')

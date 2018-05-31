@@ -6,8 +6,11 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+
+from grappa import should
+
 from pgadmin.utils.compile_template_name import compile_template_name
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 
 
 class TestCompileTemplateName(BaseTestGenerator):
@@ -32,8 +35,9 @@ class TestCompileTemplateName(BaseTestGenerator):
         ),
     ]
 
-    def runTest(self):
+    def test_all(self, args, kwargs):
+        self._expand_test_object(kwargs)
         result = compile_template_name(
             'some/prefix', 'some_file.sql', self.server_type, self.version
         )
-        self.assertEquals(result, self.expected_return_value)
+        result | should.be.equal.to(self.expected_return_value)

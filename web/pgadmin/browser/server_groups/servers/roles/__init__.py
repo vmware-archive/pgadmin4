@@ -706,7 +706,7 @@ rolmembership:{
                 _("Could not drop the role.\n{0}").format(res)
             )
 
-        return success_return()
+        return success_return('Role dropped')
 
     @check_precondition()
     def sql(self, gid, sid, rid):

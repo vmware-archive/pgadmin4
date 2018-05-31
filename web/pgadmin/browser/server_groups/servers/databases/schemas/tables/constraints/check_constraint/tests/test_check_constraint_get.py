@@ -9,71 +9,77 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.tables.tests \
     import utils as tables_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
-from pgadmin.browser.server_groups.servers.databases.tests import utils as \
-    database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression.python_test_utils import test_utils as utils
 from . import utils as chk_constraint_utils
 
 
-class CheckConstraintGetTestCase(BaseTestGenerator):
-    """This class will fetch check constraint to existing table"""
-    skip_on_database = ['gpdb']
+@pytest.mark.skip_databases(['gpdb'])
+class TestCheckConstraintGet:
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_check_constraint_get(self, context_of_tests):
+        """
+        When the check constraint GET request is send to the backend
+        it returns 200 status
+        """
+        url = '/browser/check_constraint/obj/'
 
-    scenarios = [
-        ('Fetch check constraint to table',
-         dict(url='/browser/check_constraint/obj/'))
-    ]
+        tester = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
 
-    def setUp(self):
-        super(CheckConstraintGetTestCase, self).setUp()
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 self.server_id, self.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to fetch a check "
-                            "constraint.")
-        self.schema_id = schema_info["schema_id"]
-        self.schema_name = schema_info["schema_name"]
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      self.db_name,
-                                                      self.schema_name)
+        db_name = server_data['db_name']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        schema_id = server_data['schema_id']
+        schema_name = server_data['schema_name']
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
-            raise Exception("Could not find the schema to fetch a check "
-                            "constraint.")
-        self.table_name = "table_checkconstraint_get_%s" % \
-                          (str(uuid.uuid4())[1:8])
-        self.table_id = tables_utils.create_table(self.server,
-                                                  self.db_name,
-                                                  self.schema_name,
-                                                  self.table_name)
-        self.check_constraint_name = "test_checkconstraint_get_%s" % \
-                                     (str(uuid.uuid4())[1:8])
-        self.check_constraint_id = \
+            raise Exception('Could not find the schema to fetch a check '
+                            'constraint.')
+        table_name = 'table_checkconstraint_get_%s' % \
+                     (str(uuid.uuid4())[1:8])
+        table_id = tables_utils.create_table(server,
+                                             db_name,
+                                             schema_name,
+                                             table_name)
+        check_constraint_name = 'test_checkconstraint_get_%s' % \
+                                (str(uuid.uuid4())[1:8])
+        check_constraint_id = \
             chk_constraint_utils.create_check_constraint(
-                self.server, self.db_name, self.schema_name, self.table_name,
-                self.check_constraint_name)
+                server, db_name, schema_name, table_name,
+                check_constraint_name)
 
-    def runTest(self):
-        """This function will fetch check constraint to table."""
-        response = self.tester.get(
-            "{0}{1}/{2}/{3}/{4}/{5}/{6}".format(self.url, utils.SERVER_GROUP,
-                                                self.server_id, self.db_id,
-                                                self.schema_id,
-                                                self.table_id,
-                                                self.check_constraint_id),
+        response = tester.get(
+            '{0}{1}/{2}/{3}/{4}/{5}/{6}'.format(url, utils.SERVER_GROUP,
+                                                server_id, db_id,
+                                                schema_id,
+                                                table_id,
+                                                check_constraint_id),
             follow_redirects=True
         )
-        self.assertEquals(response.status_code, 200)
 
-    def tearDown(self):
-        # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        (json_response | should.have.key('comment') >
+         should.be.equal.to('this is test comment'))
+        (json_response | should.have.key('name') >
+         should.be.equal.to(check_constraint_name))
+        (json_response | should.have.key('nspname') >
+         should.be.equal.to(schema_name))
+        json_response | should.have.key('oid')
+        (json_response | should.have.key('consrc') >
+         should.be.equal.to('id > 0'))
+        (json_response | should.have.key('relname') >
+         should.be.equal.to(table_name))
+        json_response | should.have.key('connoinherit') > should.be.false
+        json_response | should.have.key('convalidated') > should.be.true

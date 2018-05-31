@@ -9,39 +9,50 @@
 
 import os
 
-from regression.python_test_utils.sql_template_test_base import \
-    SQLTemplateTestBase
+import pytest
+from grappa import should
+
+from regression.python_test_utils import test_utils
 from regression.python_test_utils.template_helper import file_as_template
 
 
-class TestTriggerNodesSql(SQLTemplateTestBase):
-    scenarios = [
-        ('Test Trigger Nodes SQL file', dict())
-    ]
+@pytest.mark.database
+class TestTriggerNodesSql:
+    def test_trigger_nodes_sql(self, context_of_tests):
+        """
+        When all parameters are present
+        It correctly generates the SQL
+        And executes against the database
+        """
+        server = context_of_tests['server']
+        with test_utils.Database(server) as (connection, database_name):
+            test_utils.create_table(server, database_name, 'test_table')
 
-    def __init__(self):
-        super(TestTriggerNodesSql, self).__init__()
-        self.table_id = -1
+            if connection.server_version < 90100:
+                versions_to_test = ['default']
+            else:
+                versions_to_test = ['9.1_plus']
 
-    def test_setup(self, connection, cursor):
-        cursor.execute("SELECT pg_class.oid AS table_id "
-                       "FROM pg_class "
-                       "WHERE pg_class.relname='test_table'")
-        self.table_id = cursor.fetchone()[0]
+            cursor = connection.cursor()
+            cursor.execute("SELECT pg_class.oid AS table_id "
+                           "FROM pg_class "
+                           "WHERE pg_class.relname='test_table'")
+            table_id = cursor.fetchone()[0]
 
-    def generate_sql(self, version):
-        template_file = self.get_template_file(version, "nodes.sql")
-        template = file_as_template(template_file)
-        sql = template.render(tid=self.table_id)
+            for version in versions_to_test:
+                template_file = self.get_template_file(version, 'nodes.sql')
+                template = file_as_template(template_file)
+                sql = template.render(tid=table_id)
 
-        return sql
+                cursor = connection.cursor()
+                cursor.execute(sql)
+                fetch_result = cursor.fetchall()
 
-    def assertions(self, fetch_result, descriptions):
-        self.assertEqual(0, len(fetch_result))
+                fetch_result | should.be.empty
 
     @staticmethod
     def get_template_file(version, filename):
         return os.path.join(
-            os.path.dirname(__file__), "..", "templates", "trigger", "sql",
+            os.path.dirname(__file__), '..', 'templates', 'trigger', 'sql',
             version, filename
         )

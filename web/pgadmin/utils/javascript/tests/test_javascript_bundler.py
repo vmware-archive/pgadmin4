@@ -9,7 +9,9 @@
 
 
 import sys
-from pgadmin.utils.route import BaseTestGenerator
+
+from grappa import should
+
 from pgadmin.utils.javascript.javascript_bundler import JavascriptBundler
 from pgadmin.utils.javascript.javascript_bundler import JsState
 
@@ -19,20 +21,15 @@ else:
     from unittest.mock import patch
 
 
-class JavascriptBundlerTestCase(BaseTestGenerator):
-    """This tests that the javascript bundler tool causes the application to
-    bundle,and can be invoked before and after app start correctly"""
-
-    scenarios = [('scenario name: JavascriptBundlerTestCase', dict())]
-
-    def __init__(self, methodName='runTest'):
-        super(BaseTestGenerator, self).__init__(methodName)
-        self.mockOs = None
-        self.mockSubprocessCall = None
+class TestJavascriptBundler:
 
     @patch('pgadmin.utils.javascript.javascript_bundler.os')
     @patch('pgadmin.utils.javascript.javascript_bundler.call')
-    def runTest(self, subprocessMock, osMock):
+    def test_javascript_bundler(self, subprocessMock, osMock):
+        """
+        When the javascript bundler tool is run
+        It causes the application to bundle
+        """
         self.mockOs = osMock
         self.mockSubprocessCall = subprocessMock
 
@@ -56,7 +53,8 @@ class JavascriptBundlerTestCase(BaseTestGenerator):
 
     def _bundling_succeeds(self):
         javascript_bundler = JavascriptBundler()
-        self.assertEqual(len(self.mockSubprocessCall.method_calls), 0)
+        self.mockSubprocessCall.method_calls | \
+            should.have.length.of(0)
         self.mockSubprocessCall.return_value = 0
 
         self.mockOs.listdir.return_value = [
@@ -70,7 +68,8 @@ class JavascriptBundlerTestCase(BaseTestGenerator):
 
     def _bundling_fails_when_bundling_returns_nonzero(self):
         javascript_bundler = JavascriptBundler()
-        self.assertEqual(len(self.mockSubprocessCall.method_calls), 0)
+        self.mockSubprocessCall.method_calls | \
+            should.have.length.of(0)
         self.mockOs.listdir.return_value = []
         self.mockSubprocessCall.return_value = 99
 
@@ -115,5 +114,4 @@ class JavascriptBundlerTestCase(BaseTestGenerator):
         self.__assertState(javascript_bundler, JsState.OLD)
 
     def __assertState(self, javascript_bundler, expected_state):
-        reported_state = javascript_bundler.report()
-        self.assertEqual(reported_state, expected_state)
+        javascript_bundler.report() | should.equal(expected_state)

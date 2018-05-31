@@ -11,170 +11,198 @@ import os
 import re
 
 from flask import Flask, render_template
+from grappa import should
 from jinja2 import FileSystemLoader
 
-from pgadmin import VersionedTemplateLoader
-from pgadmin.utils.route import BaseTestGenerator
-from pgadmin.utils.driver import get_driver
 from config import PG_DEFAULT_DRIVER
+from pgadmin.utils.driver import get_driver
+
 try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
 
 
-class TestViewDataTemplates(BaseTestGenerator):
-    """
-    This class validates the template query for
-    inserting and selecting table data.
-    """
-    data_to_be_saved = OrderedDict()
-    data_to_be_saved['id'] = '1'
-    data_to_be_saved['text'] = 'just test'
-    scenarios = [
-        (
-            'When inserting and selecting table data with only PK',
-            dict(
-                insert_template_path='sqleditor/sql/default/insert.sql',
-                insert_parameters=dict(
-                    data_to_be_saved=data_to_be_saved,
-                    primary_keys=None,
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    data_type={'text': 'text', 'id': 'integer'},
-                    pk_names='id',
-                    has_oids=False
-                ),
-                insert_expected_return_value='INSERT INTO'
-                                             ' test_schema.test_table'
-                                             ' (id, text) VALUES'
-                                             ' (%(id)s::integer, '
-                                             '%(text)s::text)'
-                                             ' returning id;',
-                select_template_path='sqleditor/sql/default/select.sql',
-                select_parameters=dict(
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    primary_keys=OrderedDict([('id', 'int4')]),
-                    has_oids=False
-                ),
-                select_expected_return_value='SELECT * FROM '
-                                             'test_schema.test_table'
-                                             'WHERE id = %(id)s;'
-            )),
-        (
-            'When inserting and selecting table data with multiple PK',
-            dict(
-                insert_template_path='sqleditor/sql/default/insert.sql',
-                insert_parameters=dict(
-                    data_to_be_saved=data_to_be_saved,
-                    primary_keys=None,
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    data_type={'text': 'text', 'id': 'integer'},
-                    pk_names='id, text',
-                    has_oids=False
-                ),
-                insert_expected_return_value='INSERT INTO'
-                                             ' test_schema.test_table'
-                                             ' (id, text)'
-                                             ' VALUES (%(id)s::integer,'
-                                             ' %(text)s::text)'
-                                             ' returning id, text;',
-                select_template_path='sqleditor/sql/default/select.sql',
-                select_parameters=dict(
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    primary_keys=OrderedDict([('id', 'int4'),
-                                              ('text', 'text')]),
-                    has_oids=False
-                ),
-                select_expected_return_value='SELECT * FROM'
-                                             ' test_schema.test_table'
-                                             'WHERE id = %(id)s AND'
-                                             ' text = %(text)s;'
-            )),
-        (
-            'When inserting and selecting table data with PK and OID',
-            dict(
-                insert_template_path='sqleditor/sql/default/insert.sql',
-                insert_parameters=dict(
-                    data_to_be_saved=data_to_be_saved,
-                    primary_keys=None,
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    data_type={'text': 'text', 'id': 'integer'},
-                    pk_names='id',
-                    has_oids=True
-                ),
-                insert_expected_return_value='INSERT INTO'
-                                             ' test_schema.test_table'
-                                             ' (id, text) VALUES'
-                                             ' (%(id)s::integer, '
-                                             '%(text)s::text) '
-                                             'returning oid;',
-                select_template_path='sqleditor/sql/default/select.sql',
-                select_parameters=dict(
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    primary_keys=OrderedDict([('id', 'int4')]),
-                    has_oids=True
-                ),
-                select_expected_return_value='SELECT oid, * '
-                                             'FROM test_schema.test_table'
-                                             'WHERE oid = %(oid)s;'
-            )),
-        (
-            'When inserting and selecting table data with only OID',
-            dict(
-                insert_template_path='sqleditor/sql/default/insert.sql',
-                insert_parameters=dict(
-                    data_to_be_saved=data_to_be_saved,
-                    primary_keys=None,
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    data_type={'text': 'text', 'id': 'integer'},
-                    pk_names=None,
-                    has_oids=True
-                ),
-                insert_expected_return_value='INSERT INTO'
-                                             ' test_schema.test_table'
-                                             ' (id, text) VALUES'
-                                             ' (%(id)s::integer,'
-                                             ' %(text)s::text)'
-                                             ' returning oid;',
-                select_template_path='sqleditor/sql/default/select.sql',
-                select_parameters=dict(
-                    object_name='test_table',
-                    nsp_name='test_schema',
-                    primary_keys=None,
-                    has_oids=True
-                ),
-                select_expected_return_value='SELECT oid, * FROM'
-                                             ' test_schema.test_table'
-                                             'WHERE oid = %(oid)s;'
-            )
-        )
-    ]
-
-    def setUp(self):
-        self.loader = VersionedTemplateLoader(FakeApp())
-
-    def runTest(self):
+class TestViewDataTemplates:
+    def test_insert_with_only_pk(self):
+        """
+        When Inserting table data with only Primary Key
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
         with FakeApp().app_context():
-            result = render_template(self.insert_template_path,
-                                     **self.insert_parameters)
-            self.assertEqual(
-                re.sub(' +', ' ', str(result).replace("\n", "")),
-                re.sub(' +', ' ',
-                       self.insert_expected_return_value.replace("\n", "")))
+            result = render_template('sqleditor/sql/default/insert.sql',
+                                     data_to_be_saved=data_to_be_saved,
+                                     primary_keys=None,
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     data_type={'text': 'text',
+                                                'id': 'integer'},
+                                     pk_names='id',
+                                     has_oids=False)
 
-            result = render_template(self.select_template_path,
-                                     **self.select_parameters)
-            self.assertEqual(
-                re.sub(' +', ' ', str(result).replace("\n", "")),
-                re.sub(' +', ' ',
-                       self.select_expected_return_value.replace("\n", "")))
+            str(result).replace("\n", "") | should.be.equal(
+                'INSERT INTO test_schema.test_table (id, text) VALUES'
+                ' (%(id)s::integer, %(text)s::text) returning id;'
+                .replace("\n", ""))
+
+    def test_insert_with_multiple_pk(self):
+        """
+        When Inserting table data with multiple Primary Keys
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/insert.sql',
+                                     data_to_be_saved=data_to_be_saved,
+                                     primary_keys=None,
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     data_type={'text': 'text',
+                                                'id': 'integer'},
+                                     pk_names='id, text',
+                                     has_oids=False)
+
+            str(result).replace("\n", "") | should.be.equal(
+                'INSERT INTO test_schema.test_table (id, text) VALUES'
+                ' (%(id)s::integer, %(text)s::text) returning id, text;'
+                .replace("\n", ""))
+
+    def test_insert_with_one_pk_and_oid(self):
+        """
+        When Inserting table data with one Primary Key and OID
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/insert.sql',
+                                     data_to_be_saved=data_to_be_saved,
+                                     primary_keys=None,
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     data_type={'text': 'text',
+                                                'id': 'integer'},
+                                     pk_names='id',
+                                     has_oids=True)
+
+            str(result).replace("\n", "") | should.be.equal(
+                'INSERT INTO test_schema.test_table (id, text) VALUES'
+                ' (%(id)s::integer, %(text)s::text) returning oid;'
+                .replace("\n", ""))
+
+    def test_insert_with_only_oid(self):
+        """
+        When Inserting table data with OID
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/insert.sql',
+                                     data_to_be_saved=data_to_be_saved,
+                                     primary_keys=None,
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     data_type={'text': 'text',
+                                                'id': 'integer'},
+                                     pk_names='id',
+                                     has_oids=True)
+
+            str(result).replace("\n", "") | should.be.equal(
+                'INSERT INTO test_schema.test_table (id, text) VALUES'
+                ' (%(id)s::integer, %(text)s::text) returning oid;'
+                .replace("\n", ""))
+
+    def test_select_only_pk(self):
+        """
+        When Selecting table data with only Primary Key
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/select.sql',
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     primary_keys=OrderedDict(
+                                         [('id', 'int4')]),
+                                     has_oids=False)
+            re.sub(' +', ' ', str(result).replace("\n", " ")) | should.be \
+                .equal(
+                """ SELECT * FROM test_schema.test_table WHERE id = %(id)s ;"""
+            )
+
+    def test_select_with_multiple_pk(self):
+        """
+        When Selecting table data with multiple Primary Keys
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/select.sql',
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     primary_keys=OrderedDict(
+                                         [('id', 'int4'),
+                                          ('text', 'text')]),
+                                     has_oids=False)
+            re.sub(' +', ' ', str(result).replace("\n", " ")) | should.be \
+                .equal(
+                """ SELECT * FROM test_schema.test_table """ +
+                """WHERE id = %(id)s AND text = %(text)s ;"""
+            )
+
+    def test_select_with_one_pk_and_oid(self):
+        """
+        When Selecting table data with one Primary Key and OID
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/select.sql',
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     primary_keys=OrderedDict(
+                                         [('id', 'int4')]),
+                                     has_oids=True)
+            re.sub(' +', ' ', str(result).replace("\n", " ")) | should.be \
+                .equal(
+                """ SELECT oid, * FROM test_schema.test_table """ +
+                """WHERE oid = %(oid)s ;"""
+            )
+
+    def test_select_with_only_oid(self):
+        """
+        When Selecting table data with OID
+        It returns the correct SQL
+        """
+        data_to_be_saved = OrderedDict()
+        data_to_be_saved['id'] = '1'
+        data_to_be_saved['text'] = 'just test'
+        with FakeApp().app_context():
+            result = render_template('sqleditor/sql/default/select.sql',
+                                     object_name='test_table',
+                                     nsp_name='test_schema',
+                                     primary_keys=OrderedDict(
+                                         [('id', 'int4')]),
+                                     has_oids=True)
+            re.sub(' +', ' ', str(result).replace("\n", " ")) | should.be \
+                .equal(
+                """ SELECT oid, * FROM test_schema.test_table WHERE """ +
+                """oid = %(oid)s ;"""
+            )
 
 
 class FakeApp(Flask):

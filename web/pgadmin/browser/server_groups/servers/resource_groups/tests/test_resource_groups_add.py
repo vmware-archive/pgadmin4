@@ -10,50 +10,48 @@
 import json
 import uuid
 
-from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+import pytest
+from grappa import should
+
+from pgadmin.utils.base_test_generator import BaseTestGenerator, \
+    PostgresVersion
 from regression.python_test_utils import test_utils as utils
 from . import utils as resource_groups_utils
 
 
-class ResourceGroupsAddTestCase(BaseTestGenerator):
-    """This class will test the add resource groups API"""
-    scenarios = [
-        ('Add resource groups', dict(url='/browser/resource_group/obj/'))
-    ]
+@pytest.mark.skip_databases(['pg'])
+@pytest.mark.skip_if_postgres_version({'below_version': PostgresVersion.v94},
+                                      'Resource groups are not supported '
+                                      'by PG9.3 '
+                                      'and PPAS9.3 and below.')
+class TestResourceGroupsAdd(BaseTestGenerator):
+    def test_add_new_resource_group(self, request, context_of_tests):
+        """
+        When request to add a resource group is valid
+        It returns success
+        """
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        self.server_id = parent_node_dict["server"][-1]["server_id"]
-        server_con = server_utils.connect_server(self, self.server_id)
-        if not server_con["info"] == "Server connected.":
-            raise Exception("Could not connect to server to add resource "
-                            "groups.")
-        if "type" in server_con["data"]:
-            if server_con["data"]["type"] == "pg":
-                message = "Resource groups are not supported by PG."
-                self.skipTest(message)
-            else:
-                if server_con["data"]["version"] < 90400:
-                    message = "Resource groups are not supported by PPAS 9.3" \
-                              " and below."
-                    self.skipTest(message)
+        url = '/browser/resource_group/obj/'
+        server_info = context_of_tests["server_information"]
+        server_id = server_info["server_id"]
 
-    def runTest(self):
-        """This function will add resource groups under server node"""
+        http_client = context_of_tests['test_client']
+        self.server = context_of_tests['server']
         self.resource_group = "test_resource_group_add%s" % \
                               str(uuid.uuid4())[1:8]
         data = {"name": self.resource_group,
                 "cpu_rate_limit": 0,
                 "dirty_rate_limit": 0}
-        response = self.tester.post(self.url + str(utils.SERVER_GROUP) +
-                                    "/" + str(self.server_id) + "/",
+
+        response = http_client.post(url + str(utils.SERVER_GROUP) +
+                                    "/" + str(server_id) + "/",
                                     data=json.dumps(data),
                                     content_type='html/json')
-        self.assertEquals(response.status_code, 200)
+
+        response.status_code | should.be.equal(200)
 
     def tearDown(self):
-        """This function delete the resource group from the database."""
         connection = utils.get_db_connection(self.server['db'],
                                              self.server['username'],
                                              self.server['db_password'],

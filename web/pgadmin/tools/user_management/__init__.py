@@ -229,7 +229,7 @@ def create():
     try:
         usr = User(email=new_data['email'],
                    roles=new_data['roles'],
-                   active=new_data['active'],
+                   active=new_data['active'] == 1,
                    password=new_data['password'])
         db.session.add(usr)
         db.session.commit()

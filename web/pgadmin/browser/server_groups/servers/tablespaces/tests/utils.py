@@ -74,16 +74,7 @@ def create_tablespace(server, test_tablespace_name):
         raise Exception("Error while creating tablespace. %s" % exception)
 
 
-def verify_table_space(server, test_tablespace_name):
-    """
-    This function calls the GET API for role to verify
-    :param server: server info
-    :type server: dict
-    :param test_tablespace_name: tablespace name
-    :type test_tablespace_name: str
-    :return tablespace_count: tablespace count
-    :rtype: int
-    """
+def tablespace_exists(server, test_tablespace_name):
     try:
         connection = utils.get_db_connection(server['db'],
                                              server['username'],
@@ -96,7 +87,7 @@ def verify_table_space(server, test_tablespace_name):
                           " ts.spcname='%s'" % test_tablespace_name)
         tablespace_count = len(pg_cursor.fetchall())
         connection.close()
-        return tablespace_count
+        return tablespace_count == 1
     except Exception as exception:
         exception = "%s: line:%s %s" % (
             file_name, sys.exc_traceback.tb_lineno, exception)

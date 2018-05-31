@@ -16,7 +16,7 @@ from datetime import datetime
 from copy import deepcopy
 
 import config as app_config
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 from regression.feature_utils.pgadmin_page import PgadminPage
 
 

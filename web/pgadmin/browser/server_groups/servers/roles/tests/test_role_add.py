@@ -9,47 +9,54 @@
 
 import json
 
+from grappa import should
+
 from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from regression.python_test_utils import test_utils as utils
 from . import utils as roles_utils
 
 
-class LoginRoleAddTestCase(BaseTestGenerator):
-    """This class has add role scenario"""
+class TestRoleAdd:
+    def test_add_new_role(self, request, context_of_tests):
+        """
+        When a request is sent to add a new Role is valid
+        It return success
+        """
+        request.addfinalizer(self.tearDown)
 
-    scenarios = [
-        # Fetching default URL for roles node.
-        ('Check Role Node', dict(url='/browser/role/obj/'))
-    ]
-
-    def setUp(self):
-        pass
-
-    def runTest(self):
-        """This function test the add role scenario"""
-        server_id = parent_node_dict["server"][-1]["server_id"]
-        server_response = server_utils.connect_server(self, server_id)
+        self.server = context_of_tests['server']
+        http_client = context_of_tests['test_client']
+        url = '/browser/role/obj/'
+        server_id = context_of_tests['server_information']['server_id']
+        server_response = server_utils.client_connect_server(
+            http_client,
+            server_id,
+            self.server['db_password'])
         if not server_response['data']['connected']:
-            raise Exception("Server not found to add the role.")
+            raise Exception('Server not found to add the role.')
 
         data = roles_utils.get_role_data(self.server['db_password'])
         self.role_name = data['rolname']
-        response = self.tester.post(
-            self.url + str(utils.SERVER_GROUP) + '/' + str(server_id) + '/',
+        response = http_client.post(
+            url + str(utils.SERVER_GROUP) + '/' + str(server_id) + '/',
             data=json.dumps(data),
             content_type='html/json'
         )
-        self.assertEquals(response.status_code, 200)
-        response_data = json.loads(response.data.decode('utf-8'))
-        role_id = response_data['node']['_id']
-        role_dict = {"server_id": server_id, "role_id": role_id,
-                     "role_name": self.role_name}
-        utils.write_node_info("lrid", role_dict)
+        response.status_code | should.be.equal(200)
+
+        json_response = convert_response_to_json(response)
+        assert_json_values_from_response(
+            json_response,
+            'role',
+            'pgadmin.node.role',
+            False,
+            'icon-group',
+            self.role_name
+        )
 
     def tearDown(self):
-        """This function delete the role from added server"""
         connection = utils.get_db_connection(self.server['db'],
                                              self.server['username'],
                                              self.server['db_password'],

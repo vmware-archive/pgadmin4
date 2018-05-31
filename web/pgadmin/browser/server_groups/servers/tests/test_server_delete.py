@@ -6,34 +6,35 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+from grappa import should
 
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
 from regression.python_test_utils import test_utils as utils
 
 
-class ServerDeleteTestCase(BaseTestGenerator):
-    """ This class will delete the last server present under tree node."""
+class TestServerDelete:
+    def test_server_delete(self, request, context_of_tests):
+        """
+        When sending delete request to server url
+        It returns 200 status code
+        """
 
-    scenarios = [
-        # Fetching the default url for server node
-        ('Default Server Node url', dict(url='/browser/server/obj/'))
-    ]
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        """This function add the server to test the DELETE API"""
-        self.server_id = utils.create_server(self.server)
+        url = "/browser/server/obj/{0}/".format(utils.SERVER_GROUP)
+
+        server = context_of_tests['server']
+        self.server_id = utils.create_server(server)
+        self.tester = context_of_tests['test_client']
+
+        if not self.server_id:
+            raise Exception("No server to delete!!!")
+
         server_dict = {"server_id": self.server_id}
         utils.write_node_info("sid", server_dict)
 
-    def runTest(self):
-        """This function deletes the added server"""
-        url = self.url + str(utils.SERVER_GROUP) + "/"
-        if not self.server_id:
-            raise Exception("No server to delete!!!")
-        # Call API to delete the servers
         response = self.tester.delete(url + str(self.server_id))
-        self.assertEquals(response.status_code, 200)
+        response.status_code | should.equal(200)
 
     def tearDown(self):
-        """This function delete the server from SQLite """
         utils.delete_server_with_api(self.tester, self.server_id)

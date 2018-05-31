@@ -9,55 +9,80 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression.python_test_utils import test_utils as utils
 from . import utils as tablespace_utils
 
 
-class TablespaceGetTestCase(BaseTestGenerator):
-    """This class tests the get table space scenario"""
+class TestTablespaceGet:
+    def test_tablespace_get(self, request, context_of_tests):
+        """
+        When the tablespace GET request is send to the backend
+        it returns 200 status
+        """
+        self.server = context_of_tests['server']
 
-    scenarios = [
-        # Fetching default URL for roles node.
-        ('Check Tablespace Node', dict(url='/browser/tablespace/obj/'))
-    ]
+        if not self.server['tablespace_path'] \
+           or self.server['tablespace_path'] is None:
+            message = 'Tablespace get test case. Tablespace path' \
+                      ' not configured for server: %s' % self.server['name']
+            pytest.skip(message)
 
-    def setUp(self):
-        if not self.server['tablespace_path']\
-                or self.server['tablespace_path'] is None:
-            message = "Tablespace get test case. Tablespace path" \
-                      " not configured for server: %s" % self.server['name']
-            # Skip the test case if tablespace_path not found.
-            self.skipTest(message)
-        self.tablespace_name = "tablespace_delete_%s" % str(uuid.uuid4())[1:8]
-        self.tablespace_id = tablespace_utils.create_tablespace(
-            self.server, self.tablespace_name)
-        self.server_id = parent_node_dict["server"][-1]["server_id"]
-        tablespace_dict = {"tablespace_id": self.tablespace_id,
-                           "tablespace_name": self.tablespace_name,
-                           "server_id": self.server_id}
-        utils.write_node_info("tsid", tablespace_dict)
+        request.addfinalizer(self.tearDown)
 
-    def runTest(self):
-        """This function test the get table space scenario"""
-        server_response = server_utils.connect_server(self, self.server_id)
+        url = '/browser/tablespace/obj/'
+        http_client = context_of_tests['test_client']
+
+        self.tablespace_name = 'tablespace_delete_%s' % str(uuid.uuid4())[1:8]
+        tablespace_id = tablespace_utils.create_tablespace(
+            self.server,
+            self.tablespace_name)
+
+        server_id = context_of_tests['server_information']['server_id']
+
+        server_response = server_utils.client_connect_server(
+            http_client,
+            server_id,
+            self.server['db_password'])
         if not server_response['data']['connected']:
-            raise Exception("Unable to connect server to get tablespace.")
+            raise Exception('Unable to connect server to get tablespace.')
 
-        tablespace_count = tablespace_utils.verify_table_space(
-            self.server, self.tablespace_name)
-        if tablespace_count == 0:
-            raise Exception("No tablespace(s) to update!!!")
-        response = self.tester.get(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(self.server_id) + '/' + str(self.tablespace_id),
+        tablespace_exists = tablespace_utils.tablespace_exists(
+            self.server,
+            self.tablespace_name)
+        if not tablespace_exists:
+            raise Exception('No tablespace(s) to update!!!')
+
+        response = http_client.get(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(server_id) + '/' + str(tablespace_id),
             follow_redirects=True)
-        self.assertEquals(response.status_code, 200)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('spcacl') > \
+            should.be.equal.to([])
+        json_response | should.have.key('name') > \
+            should.be.equal.to(self.tablespace_name)
+        json_response | should.have.key('spcoptions') > \
+            should.be.none
+        json_response | should.have.key('oid')
+        json_response | should.have.key('spclocation') > \
+            should.be.equal.to(self.server['tablespace_path'])
+        json_response | should.have.key('acl') > \
+            should.be.none
+        json_response | should.have.key('spcuser') > \
+            should.be.equal.to(self.server['username'])
+        json_response | should.have.key('seclabels') > \
+            should.be.none
+        json_response | should.have.key('description') > \
+            should.be.none
 
     def tearDown(self):
-        """This function delete the tablespace from added server"""
         connection = utils.get_db_connection(self.server['db'],
                                              self.server['username'],
                                              self.server['db_password'],

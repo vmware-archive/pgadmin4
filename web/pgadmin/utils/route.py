@@ -9,17 +9,10 @@
 
 import sys
 import traceback
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from importlib import import_module
 
-import six
 from werkzeug.utils import find_modules
-from pgadmin.utils import server_utils
-
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
 
 
 class TestsGeneratorRegistry(ABCMeta):
@@ -75,43 +68,3 @@ class TestsGeneratorRegistry(ABCMeta):
                     import_module(module_name)
             except ImportError:
                 traceback.print_exc(file=sys.stderr)
-
-
-@six.add_metaclass(TestsGeneratorRegistry)
-class BaseTestGenerator(unittest.TestCase):
-    # Defining abstract method which will override by individual testcase.
-
-    def setUp(self):
-        super(BaseTestGenerator, self).setUp()
-        self.server_id = self.server_information["server_id"]
-        server_con = server_utils.connect_server(self, self.server_id)
-        if hasattr(self, 'skip_on_database'):
-            if 'data' in server_con and 'type' in server_con['data']:
-                if server_con['data']['type'] in self.skip_on_database:
-                    self.skipTest('cannot run in: %s' %
-                                  server_con['data']['type'])
-
-    @classmethod
-    def setTestServer(cls, server):
-        cls.server = server
-
-    @abstractmethod
-    def runTest(self):
-        pass
-
-    # Initializing app.
-    def setApp(self, app):
-        self.app = app
-
-    # Initializing test_client.
-    @classmethod
-    def setTestClient(cls, test_client):
-        cls.tester = test_client
-
-    @classmethod
-    def setDriver(cls, driver):
-        cls.driver = driver
-
-    @classmethod
-    def setServerInformation(cls, server_information):
-        cls.server_information = server_information

@@ -9,58 +9,70 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import utils as \
     database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.base_test_generator import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as schema_utils
 
 
-class SchemaDeleteTestCase(BaseTestGenerator):
-    """ This class will add new schema under database node. """
+class TestSchemaDelete:
+    def test_schema_delete(self, request, context_of_tests):
+        """
+        When the schema delete request is send to the backend
+        it returns 200 status
+        """
 
-    scenarios = [
-        # Fetching default URL for extension node.
-        ('Check Schema Node URL', dict(url='/browser/schema/obj/'))
-    ]
+        url = '/browser/schema/obj/'
 
-    def setUp(self):
-        self.database_info = parent_node_dict["database"][-1]
-        self.db_name = self.database_info["db_name"]
-        # Change the db name, so that schema will create in newly created db
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_data = parent_node_dict['database'][-1]
+        self.server_id = self.server_data['server_id']
+        self.db_id = self.server_data['db_id']
+        self.db_name = self.server_data['db_name']
+
+        db_con = database_utils.connect_database(self,
+                                                 utils.SERVER_GROUP,
+                                                 self.server_id,
+                                                 self.db_id)
+        if not db_con["info"] == "Database connected.":
+            raise Exception("Could not connect to database.")
+
         self.schema_name = "schema_get_%s" % str(uuid.uuid4())[1:8]
         connection = utils.get_db_connection(self.db_name,
                                              self.server['username'],
                                              self.server['db_password'],
                                              self.server['host'],
-                                             self.server['port'])
+                                             self.server['port'],
+                                             self.server['sslmode'])
         self.schema_details = schema_utils.create_schema(connection,
                                                          self.schema_name)
-
-    def runTest(self):
-        """ This function will delete schema under database node. """
-        server_id = self.database_info["server_id"]
-        db_id = self.database_info["db_id"]
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 server_id, db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to delete the"
-                            " schema.")
-
-        schema_id = self.schema_details[0]
-        schema_name = self.schema_details[1]
         schema_response = schema_utils.verify_schemas(self.server,
                                                       self.db_name,
-                                                      schema_name)
+                                                      self.schema_name)
         if not schema_response:
             raise Exception("Could not find the schema to delete.")
 
-        response = self.tester.delete(self.url + str(utils.SERVER_GROUP) +
-                                      '/' + str(server_id) + '/' +
-                                      str(db_id) + '/' + str(schema_id),
-                                      follow_redirects=True)
-        self.assertEquals(response.status_code, 200)
+        self.schema_id = self.schema_details[0]
 
-    def tearDown(self):
-        pass
+        response = self.tester.delete(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(self.server_id) + '/' +
+            str(self.db_id) + '/' +
+            str(self.schema_id),
+            follow_redirects=True)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        json_response | should.have.key('info') > should.be.equal.to(
+            'Schema dropped')
+        json_response | should.have.key('errormsg') > should.be.empty
+        json_response | should.have.key('data')
+        json_response | should.have.key('result') > should.be.none
+        json_response | should.have.key('success') > should.be.equal.to(1)

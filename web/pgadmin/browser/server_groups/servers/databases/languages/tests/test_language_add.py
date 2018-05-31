@@ -12,26 +12,36 @@ from __future__ import print_function
 import json
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as language_utils
 
 
-class LanguagesAddTestCase(BaseTestGenerator):
-    skip_on_database = ['gpdb']
-    scenarios = [
-        ('Language add test case', dict(url='/browser/language/obj/'))
-    ]
+@pytest.mark.skip_databases(['gpdb'])
+class TestLanguagesAdd:
+    def test_language_add(self, request, context_of_tests):
+        """
+        When the language add request is send to the backend
+        it returns 200 status
+        """
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        super(LanguagesAddTestCase, self).setUp()
-        self.server_data = parent_node_dict["database"][-1]
-        self.server_id = self.server_data["server_id"]
+        url = '/browser/language/obj/'
+
+        self.server_data = parent_node_dict['database'][-1]
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_id = self.server_data['server_id']
         self.db_id = self.server_data['db_id']
-        self.db_name = self.server_data["db_name"]
+        schema_data = context_of_tests['server_information']
+        self.db_name = schema_data["db_name"]
         db_con = database_utils.connect_database(self,
                                                  utils.SERVER_GROUP,
                                                  self.server_id,
@@ -39,11 +49,7 @@ class LanguagesAddTestCase(BaseTestGenerator):
         if not db_con["info"] == "Database connected.":
             raise Exception("Could not connect to database.")
 
-    def runTest(self):
-        """This function will add language under test database."""
-
         db_user = self.server['username']
-
         self.data = {
             "lanacl": [],
             "laninl": "btint2sortsupport",
@@ -65,18 +71,25 @@ class LanguagesAddTestCase(BaseTestGenerator):
         }
 
         response = self.tester.post(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(self.db_id) + '/',
             data=json.dumps(self.data),
             content_type='html/json')
 
-        self.assertEquals(response.status_code, 200)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        assert_json_values_from_response(
+            json_response,
+            'language',
+            'pgadmin.node.language',
+            False,
+            'icon-language',
+            self.data['name']
+        )
 
     def tearDown(self):
-        """This function delete added language and
-        disconnect the test database."""
-
         language_utils.delete_language(
             self.server, self.db_name, self.data['name']
         )
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        database_utils.client_disconnect_database(self.tester, self.server_id,
+                                                  self.db_id)

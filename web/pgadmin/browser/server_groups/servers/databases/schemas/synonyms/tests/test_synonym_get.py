@@ -9,73 +9,75 @@
 
 import uuid
 
+import pytest
+from grappa import should
+
 from pgadmin.browser.server_groups.servers.databases.schemas.sequences.tests \
     import utils as sequence_utils
 from pgadmin.browser.server_groups.servers.databases.schemas.tests import \
     utils as schema_utils
-from pgadmin.browser.server_groups.servers.databases.tests import utils as \
-    database_utils
-from pgadmin.utils import server_utils as server_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from regression.python_test_utils import test_utils as utils
 from . import utils as synonym_utils
 
 
-class SynonymGetTestCase(BaseTestGenerator):
-    """This class will fetch new synonym under schema node."""
-    skip_on_database = ['gpdb']
+@pytest.mark.skip_databases(['gpdb', 'pg'])
+class TestSynonymGet:
+    @pytest.mark.usefixtures('require_database_connection')
+    def test_synonym_get(self, context_of_tests):
+        """
+        When the synonym GET request is send to the backend
+        it returns 200 status
+        """
+        url = '/browser/synonym/obj/'
 
-    scenarios = [
-        # Fetching default URL for synonym node.
-        ('Fetch synonym Node URL', dict(url='/browser/synonym/obj/'))
-    ]
+        http_client = context_of_tests['test_client']
+        server = context_of_tests['server']
+        server_data = context_of_tests['server_information']
+        server_id = server_data['server_id']
+        db_id = server_data['db_id']
+        db_name = server_data['db_name']
 
-    def setUp(self):
-        super(SynonymGetTestCase, self).setUp()
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
-        schema_info = parent_node_dict["schema"][-1]
-        self.server_id = schema_info["server_id"]
-        self.db_id = schema_info["db_id"]
-        server_con = server_utils.connect_server(self, self.server_id)
-        if server_con:
-            if "type" in server_con["data"]:
-                if server_con["data"]["type"] == "pg":
-                    message = "Synonyms are not supported by PG."
-                    self.skipTest(message)
-        db_con = database_utils.connect_database(self, utils.SERVER_GROUP,
-                                                 self.server_id, self.db_id)
-        if not db_con['data']["connected"]:
-            raise Exception("Could not connect to database to add synonym.")
-        self.schema_id = schema_info["schema_id"]
-        self.schema_name = schema_info["schema_name"]
-        schema_response = schema_utils.verify_schemas(self.server,
-                                                      self.db_name,
-                                                      self.schema_name)
+        schema_name = server_data['schema_name']
+        schema_id = server_data['schema_id']
+        schema_response = schema_utils.verify_schemas(server,
+                                                      db_name,
+                                                      schema_name)
         if not schema_response:
-            raise Exception("Could not find the schema to add the synonym.")
-        self.sequence_name = "test_sequence_synonym_%s" % \
-                             str(uuid.uuid4())[1:8]
-        self.sequence_id = sequence_utils.create_sequences(
-            self.server, self.db_name, self.schema_name, self.sequence_name)
-        self.synonym_name = "test_synonym_get_%s" % str(uuid.uuid4())[1:8]
-        synonym_utils.create_synonym(self.server,
-                                     self.db_name,
-                                     self.schema_name,
-                                     self.synonym_name,
-                                     self.sequence_name)
+            raise Exception("Could not find the schema.")
 
-    def runTest(self):
-        """This function will fetch synonym under schema node."""
+        sequence_name = "test_sequence_synonym_%s" % \
+                        str(uuid.uuid4())[1:8]
+        sequence_utils.create_sequences(
+            server,
+            db_name,
+            schema_name,
+            sequence_name
+        )
 
-        response = self.tester.get(
-            self.url + str(utils.SERVER_GROUP) + '/' +
-            str(self.server_id) + '/' + str(self.db_id) + '/' +
-            str(self.schema_id) + '/' + str(self.synonym_name),
+        synonym_name = "test_synonym_delete_%s" % str(uuid.uuid4())[1:8]
+        synonym_utils.create_synonym(server,
+                                     db_name,
+                                     schema_name,
+                                     synonym_name,
+                                     sequence_name)
+
+        response = http_client.get(
+            url + str(utils.SERVER_GROUP) + '/' +
+            str(server_id) + '/' +
+            str(db_id) + '/' +
+            str(schema_id) + '/' +
+            str(synonym_name),
             follow_redirects=True)
-        self.assertEquals(response.status_code, 200)
 
-    def tearDown(self):
-        """ Disconnect the database. """
-
-        database_utils.disconnect_database(self, self.server_id, self.db_id)
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+        assert_json_values_from_response(
+            json_response,
+            'synonym',
+            'pgadmin.node.synonym',
+            False,
+            'icon-synonym',
+            sequence_name
+        )

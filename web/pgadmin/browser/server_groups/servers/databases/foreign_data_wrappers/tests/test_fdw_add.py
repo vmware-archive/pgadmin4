@@ -11,53 +11,68 @@ from __future__ import print_function
 
 import json
 
+import pytest
+from grappa import should
+
+from pgadmin.utils.tests_helper import convert_response_to_json, \
+    assert_json_values_from_response
 from pgadmin.browser.server_groups.servers.databases.tests import \
     utils as database_utils
-from pgadmin.utils.route import BaseTestGenerator
-from regression import parent_node_dict
 from regression.python_test_utils import test_utils as utils
 from . import utils as fdw_utils
 
 
-class FDWDAddTestCase(BaseTestGenerator):
-    """ This class will add foreign data wrappers under database node. """
-    skip_on_database = ['gpdb']
+@pytest.mark.skip_databases(['gpdb'])
+class TestForeignDataWrapperAdd:
+    def test_foreign_data_wrapper_add(self, request, context_of_tests):
+        """
+        When sending a valid HTTP request to add a foreign data wrapper
+        It returns 200 status
+        """
 
-    scenarios = [
-        # Fetching default URL for foreign_data_wrapper node.
-        ('Check FDW Node',
-         dict(url='/browser/foreign_data_wrapper/obj/'))
-    ]
+        request.addfinalizer(self.tearDown)
 
-    def setUp(self):
-        """ This function will create extension."""
-        super(FDWDAddTestCase, self).setUp()
+        url = '/browser/foreign_data_wrapper/obj/'
 
-        self.schema_data = parent_node_dict['schema'][-1]
-        self.server_id = self.schema_data['server_id']
-        self.db_id = self.schema_data['db_id']
-        self.schema_name = self.schema_data['schema_name']
-        self.db_name = parent_node_dict["database"][-1]["db_name"]
+        schema_data = context_of_tests['server_information']
+        self.tester = context_of_tests['test_client']
+        self.server = context_of_tests['server']
+        self.server_id = schema_data['server_id']
+        self.db_id = schema_data['db_id']
+        self.schema_name = schema_data['schema_name']
+        self.db_name = schema_data["db_name"]
 
-    def runTest(self):
-        """This function will add foreign data wrapper under test database."""
-        db_con = database_utils.connect_database(self,
-                                                 utils.SERVER_GROUP,
-                                                 self.server_id,
-                                                 self.db_id)
-        if not db_con["info"] == "Database connected.":
-            raise Exception("Could not connect to database.")
+        db_con = database_utils.client_connect_database(
+            self.tester,
+            utils.SERVER_GROUP,
+            self.server_id,
+            self.db_id,
+            self.server["db_password"])
+
+        db_con["info"] | should.be.equal.to(
+            "Database connected.",
+            msg='Could not connect to database.')
+
         self.data = fdw_utils.get_fdw_data(self.schema_name,
                                            self.server['username'])
         response = self.tester.post(
-            self.url + str(utils.SERVER_GROUP) + '/' +
+            url + str(utils.SERVER_GROUP) + '/' +
             str(self.server_id) + '/' + str(self.db_id) + '/',
             data=json.dumps(self.data),
             content_type='html/json')
-        self.assertEquals(response.status_code, 200)
+
+        response.status_code | should.be.equal.to(200)
+        json_response = convert_response_to_json(response)
+
+        assert_json_values_from_response(json_response,
+                                         'foreign_data_wrapper',
+                                         'pgadmin.node.foreign_data_wrapper',
+                                         True,
+                                         'icon-foreign_data_wrapper',
+                                         self.data['name'])
 
     def tearDown(self):
-        """This function delete the FDW and disconnect the test database """
-        fdw_utils.delete_fdw(self.server, self.db_name, self.data["name"])
-        database_utils.disconnect_database(self, self.server_id,
-                                           self.db_id)
+        if hasattr(self, 'data'):
+            fdw_utils.delete_fdw(self.server, self.db_name, self.data["name"])
+        database_utils.client_disconnect_database(self.tester, self.server_id,
+                                                  self.db_id)

@@ -11,97 +11,104 @@ import os
 import re
 
 from flask import Flask, render_template
+from grappa import should
 from jinja2 import FileSystemLoader, ChoiceLoader
 
 from config import PG_DEFAULT_DRIVER
 from pgadmin import VersionedTemplateLoader
 from pgadmin.utils.driver import get_driver
-from pgadmin.utils.route import BaseTestGenerator
 
 
-class TestTemplateCreate(BaseTestGenerator):
-    scenarios = [
-        (
-            'When rendering GreenPlum 5.3 template, '
-            'when no distribution is present, '
-            'when no primary key is present, '
-            'it returns "DISTRIBUTED RANDOMLY"',
-            dict(
-                template_path='table/sql/gpdb_5.0_plus/create.sql',
-                input_parameters=dict(
-                    data=dict()
-                ),
-                expected_in_return_value='DISTRIBUTED RANDOMLY',
-                expected_not_in_return_value='DISTRIBUTED BY '
-            )
-        ),
-        (
-            'When rendering GreenPlum 5.3 template, '
-            'when no distribution is present, '
-            'when primary key is present, '
-            'it returns "DISTRIBUTED BY (attr_primary_key)"',
-            dict(
-                template_path='table/sql/gpdb_5.0_plus/create.sql',
-                input_parameters=dict(
-                    data=dict(
-                        primary_key=[
-                            dict(
-                                columns=[dict(
-                                    column='attr_primary_key_column_1'
-                                ), dict(
-                                    column='attr_primary_key_column_2'
-                                )]
-                            )
-                        ]
-                    )
-                ),
-                expected_in_return_value='DISTRIBUTED BY '
-                                         '(attr_primary_key_column_1, '
-                                         'attr_primary_key_column_2)',
-                expected_not_in_return_value='DISTRIBUTED RANDOMLY'
-            )
-        ),
-        (
-            'When rendering GreenPlum 5.3 template, '
-            'when distribution is present, '
-            'it returns "DISTRIBUTED BY (attr1, attr2, attr4)"',
-            dict(
-                template_path='table/sql/gpdb_5.0_plus/create.sql',
-                input_parameters=dict(
-                    data=dict(
-                        distribution=[1, 2, 4],
-                        columns=[
-                            {'name': 'attr1'},
-                            {'name': 'attr2'},
-                            {'name': 'attr3'},
-                            {'name': 'attr4'},
-                            {'name': 'attr5'},
-                        ]
-                    )
-                ),
-                expected_in_return_value='DISTRIBUTED BY '
-                                         '(attr1, attr2, attr4)',
-                expected_not_in_return_value='DISTRIBUTED RANDOMLY'
-            )
-        ),
-    ]
+class TestTemplateCreate:
+    def test_template_create(self):
+        """
+        When rendering GreenPlum 5.3 template
+        when no distribution is present
+        when no primary key is present
+        it returns "DISTRIBUTED RANDOMLY"
+        """
 
-    def setUp(self):
         self.loader = VersionedTemplateLoader(FakeApp())
 
-    def runTest(self):
         with FakeApp().app_context():
             result = render_template(
-                self.template_path, **self.input_parameters)
+                'table/sql/gpdb_5.0_plus/create.sql',
+                data=dict()
+            )
             result_beautified = re.sub(
                 ' +', ' ', str(result).replace("\n", " ").strip())
-            if hasattr(self, 'expected_return_value'):
-                self.assertEqual(result_beautified, self.expected_return_value)
-            if hasattr(self, 'expected_in_return_value'):
-                self.assertIn(self.expected_in_return_value, result_beautified)
-            if hasattr(self, 'expected_not_in_return_value'):
-                self.assertNotIn(
-                    self.expected_not_in_return_value, result_beautified)
+
+            result_beautified | should.contain('DISTRIBUTED RANDOMLY')
+            result_beautified | should.to_not.contain(
+                'DISTRIBUTED BY '
+            )
+
+    def test_template_create_primary_key(self):
+        """
+        When rendering GreenPlum 5.3 template
+        when no distribution is present
+        when primary key is present
+        it returns "DISTRIBUTED BY (attr_primary_key)"
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'table/sql/gpdb_5.0_plus/create.sql',
+                data=dict(
+                    primary_key=[
+                        dict(
+                            columns=[dict(
+                                column='attr_primary_key_column_1'
+                            ), dict(
+                                column='attr_primary_key_column_2'
+                            )]
+                        )
+                    ]
+                )
+            )
+            result_beautified = re.sub(
+                ' +', ' ', str(result).replace("\n", " ").strip())
+
+            result_beautified | should.contain('DISTRIBUTED BY '
+                                               '(attr_primary_key_column_1, '
+                                               'attr_primary_key_column_2)')
+            result_beautified | should.to_not.contain(
+                'DISTRIBUTED RANDOMLY'
+            )
+
+    def test_template_create_distribution(self):
+        """
+        When rendering GreenPlum 5.3 template
+        when distribution is present
+        it returns "DISTRIBUTED BY (attr1, attr2, attr4)"
+        """
+
+        self.loader = VersionedTemplateLoader(FakeApp())
+
+        with FakeApp().app_context():
+            result = render_template(
+                'table/sql/gpdb_5.0_plus/create.sql',
+                data=dict(
+                    distribution=[1, 2, 4],
+                    columns=[
+                        {'name': 'attr1'},
+                        {'name': 'attr2'},
+                        {'name': 'attr3'},
+                        {'name': 'attr4'},
+                        {'name': 'attr5'},
+                    ]
+                )
+            )
+            result_beautified = re.sub(
+                ' +', ' ', str(result).replace("\n", " ").strip())
+
+            result_beautified | should.contain('DISTRIBUTED BY '
+                                               '(attr1, attr2, attr4)')
+            result_beautified | should.to_not.contain(
+                'DISTRIBUTED RANDOMLY'
+            )
 
 
 class FakeApp(Flask):
