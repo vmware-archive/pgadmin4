@@ -10,6 +10,8 @@
 import json
 import os
 import time
+
+from grappa import should
 from selenium.webdriver import ActionChains
 from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
@@ -27,7 +29,7 @@ except Exception as e:
     print(str(e))
 
 
-class CheckForViewDataTest(BaseFeatureTest):
+class TestCheckForViewData(BaseFeatureTest):
     """
     Test cases to validate insert, update operations in table
     with input test data
@@ -42,12 +44,6 @@ class CheckForViewDataTest(BaseFeatureTest):
         3) Update with blank string
         4) Copy/Paste row
     """
-
-    scenarios = [
-        ("Validate Insert, Update operations in View/Edit data with "
-         "given test data",
-         dict())
-    ]
 
     TIMEOUT_STRING = "Timed out waiting for div element to appear"
 
@@ -80,7 +76,11 @@ CREATE TABLE public.defaults_{0}
 )
 """
 
-    def before(self):
+    def test_check_for_view_data(self, driver):
+        self.driver = driver
+
+        self.setUp()
+
         with test_utils.Database(self.server) as (connection, _):
             if connection.server_version < 90100:
                 self.skipTest(
@@ -103,12 +103,11 @@ CREATE TABLE public.defaults_{0}
             test_utils.create_table_with_query(
                 self.server,
                 "acceptance_test_db",
-                CheckForViewDataTest.defaults_query.format(k, v))
+                TestCheckForViewData.defaults_query.format(k, v))
 
         # Initialize an instance of WebDriverWait with timeout of 3 seconds
         self.wait = WebDriverWait(self.driver, 3)
 
-    def runTest(self):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)
         self._tables_node_expandable()
@@ -127,7 +126,6 @@ CREATE TABLE public.defaults_{0}
             self._copy_paste_row()
             self.page.close_data_grid()
 
-    def after(self):
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],
@@ -161,12 +159,12 @@ CREATE TABLE public.defaults_{0}
         try:
             wait.until(EC.text_to_be_present_in_element(
                 (By.XPATH, xpath + "//span"), str(value)),
-                CheckForViewDataTest.TIMEOUT_STRING
+                TestCheckForViewData.TIMEOUT_STRING
             )
         except Exception:
             wait.until(EC.text_to_be_present_in_element(
                 (By.XPATH, xpath), str(value)),
-                CheckForViewDataTest.TIMEOUT_STRING
+                TestCheckForViewData.TIMEOUT_STRING
             )
 
     def _update_cell(self, xpath, data):
@@ -182,7 +180,7 @@ CREATE TABLE public.defaults_{0}
         """
 
         self.wait.until(EC.visibility_of_element_located(
-            (By.XPATH, xpath)), CheckForViewDataTest.TIMEOUT_STRING
+            (By.XPATH, xpath)), TestCheckForViewData.TIMEOUT_STRING
         )
         cell_el = self.page.find_by_xpath(xpath)
         self.page.driver.execute_script("arguments[0].scrollIntoView()",
@@ -247,16 +245,16 @@ CREATE TABLE public.defaults_{0}
         self.wait.until(
             EC.visibility_of_element_located(
                 (By.CSS_SELECTOR, 'iframe')
-            ), CheckForViewDataTest.TIMEOUT_STRING
+            ), TestCheckForViewData.TIMEOUT_STRING
         )
         self.page.driver.switch_to.frame(
             self.page.driver.find_element_by_tag_name('iframe')
         )
 
     def _copy_paste_row(self):
-        row0_cell0_xpath = CheckForViewDataTest._get_cell_xpath("r0", 1)
-        row1_cell1_xpath = CheckForViewDataTest._get_cell_xpath("r1", 2)
-        row1_cell2_xpath = CheckForViewDataTest._get_cell_xpath("r2", 2)
+        row0_cell0_xpath = TestCheckForViewData._get_cell_xpath("r0", 1)
+        row1_cell1_xpath = TestCheckForViewData._get_cell_xpath("r1", 2)
+        row1_cell2_xpath = TestCheckForViewData._get_cell_xpath("r2", 2)
 
         self.page.find_by_xpath(row0_cell0_xpath).click()
         self.page.find_by_xpath("//*[@id='btn-copy-row']").click()
@@ -264,7 +262,7 @@ CREATE TABLE public.defaults_{0}
         # Update primary key of copied cell
         self._update_cell(row1_cell1_xpath, [2, "", "int"])
         self.page.find_by_xpath(
-            CheckForViewDataTest._get_cell_xpath("r1", "3")
+            TestCheckForViewData._get_cell_xpath("r1", "3")
         ).click()
 
         # Check if removing a cell value with default value sets
@@ -272,7 +270,7 @@ CREATE TABLE public.defaults_{0}
         self._update_cell(row1_cell2_xpath, ["clear", "", "int"])
         # click outside
         self.page.find_by_xpath(
-            CheckForViewDataTest._get_cell_xpath("r1", "3")
+            TestCheckForViewData._get_cell_xpath("r1", "3")
         ).click()
 
         self._compare_cell_value(row1_cell2_xpath, "[default]")
@@ -291,7 +289,7 @@ CREATE TABLE public.defaults_{0}
 
     def _add_row(self):
         for idx in range(1, len(config_data.keys()) + 1):
-            cell_xpath = CheckForViewDataTest._get_cell_xpath(
+            cell_xpath = TestCheckForViewData._get_cell_xpath(
                 'r' + str(idx), 1
             )
             time.sleep(0.2)
@@ -326,7 +324,7 @@ CREATE TABLE public.defaults_{0}
                                             element)
 
             if (idx != 1 and not is_new_row) or is_new_row:
-                self.assertEquals(element.text, config_data[str(idx)][1])
+                element.text | should.equal(config_data[str(idx)][1])
 
         # scroll browser back to the left
         # to reset position so other assertions can succeed

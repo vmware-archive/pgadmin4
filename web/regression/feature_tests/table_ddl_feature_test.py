@@ -6,19 +6,16 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 from regression.python_test_utils import test_utils
 
 
-class TableDdlFeatureTest(BaseFeatureTest):
-    """ This class test acceptance test scenarios """
+class TestTableDdl(BaseFeatureTest):
+    def test_table_ddl(self, driver):
+        self.driver = driver
 
-    scenarios = [
-        ("Test table DDL generation", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -33,7 +30,6 @@ class TableDdlFeatureTest(BaseFeatureTest):
 
         self.page.add_server(self.server)
 
-    def runTest(self):
         test_utils.create_table(
             self.server, "acceptance_test_db", "test_table")
 
@@ -50,7 +46,6 @@ class TableDdlFeatureTest(BaseFeatureTest):
             "//*[contains(@class,'CodeMirror-lines') and "
             "contains(.,'CREATE TABLE public.test_table')]")
 
-    def after(self):
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],

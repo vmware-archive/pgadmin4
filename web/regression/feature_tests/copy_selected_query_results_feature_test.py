@@ -8,6 +8,7 @@
 ##########################################################################
 
 import pyperclip
+from grappa import should
 
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -16,16 +17,15 @@ from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
-    """
-    Tests various ways to copy data from the query results grid.
-    """
+class TestCopySelectedQueryResults(BaseFeatureTest):
+    def test_copy_selected_query_results(self, driver):
+        """
+        Tests various ways to copy data from the query results grid.
+        """
+        self.driver = driver
 
-    scenarios = [
-        ("Copy rows, column using button and keyboard shortcut", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -40,7 +40,6 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
             self.server, "acceptance_test_db", "test_table")
         self.page.add_server(self.server)
 
-    def runTest(self):
         self.page.toggle_open_tree_item(self.server['name'])
         self.page.toggle_open_tree_item('Databases')
         self.page.toggle_open_tree_item('acceptance_test_db')
@@ -63,6 +62,19 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         self._shift_resizes_column_selection()
         self._mouseup_outside_grid_still_makes_a_selection()
 
+        self.page.close_query_tool()
+        self.page.remove_server(self.server)
+
+        connection = test_utils.get_db_connection(
+            self.server['db'],
+            self.server['username'],
+            self.server['db_password'],
+            self.server['host'],
+            self.server['port'],
+            self.server['sslmode']
+        )
+        test_utils.drop_database(connection, "acceptance_test_db")
+
     def _copies_rows(self):
         pyperclip.copy("old clipboard contents")
         self.page.find_by_xpath(
@@ -70,8 +82,7 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
 
         self.page.find_by_xpath("//*[@id='btn-copy-row']").click()
 
-        self.assertEqual('"Some-Name"\t"6"\t"some info"',
-                         pyperclip.paste())
+        pyperclip.paste() | should.equal('"Some-Name"\t"6"\t"some info"')
 
     def _copies_columns(self):
         pyperclip.copy("old clipboard contents")
@@ -81,11 +92,9 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         ).click()
         self.page.find_by_xpath("//*[@id='btn-copy-row']").click()
 
-        self.assertEqual(
-            """\"Some-Name"
+        pyperclip.paste() | should.equal("""\"Some-Name"
 "Some-Other-Name"
-"Yet-Another-Name\"""",
-            pyperclip.paste())
+"Yet-Another-Name\"""")
 
     def _copies_row_using_keyboard_shortcut(self):
         pyperclip.copy("old clipboard contents")
@@ -95,8 +104,7 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         ActionChains(self.page.driver).key_down(
             Keys.CONTROL).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertEqual('"Some-Name"\t"6"\t"some info"',
-                         pyperclip.paste())
+        pyperclip.paste() | should.equal('"Some-Name"\t"6"\t"some info"')
 
     def _copies_column_using_keyboard_shortcut(self):
         pyperclip.copy("old clipboard contents")
@@ -108,11 +116,9 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         ActionChains(self.page.driver).key_down(
             Keys.CONTROL).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertEqual(
-            """\"Some-Name"
+        pyperclip.paste() | should.equal("""\"Some-Name"
 "Some-Other-Name"
-"Yet-Another-Name\"""",
-            pyperclip.paste())
+"Yet-Another-Name\"""")
 
     def _copies_rectangular_selection(self):
         pyperclip.copy("old clipboard contents")
@@ -134,8 +140,8 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
             self.page.driver
         ).key_down(Keys.CONTROL).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertEqual("""\"Some-Other-Name"\t"22"
-"Yet-Another-Name"\t"14\"""", pyperclip.paste())
+        pyperclip.paste() | should.equal("""\"Some-Other-Name"\t"22"
+"Yet-Another-Name"\t"14\"""")
 
     def _shift_resizes_rectangular_selection(self):
         pyperclip.copy("old clipboard contents")
@@ -160,8 +166,8 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
             Keys.CONTROL
         ).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertEqual("""\"Some-Other-Name"\t"22"\t"some other info"
-"Yet-Another-Name"\t"14"\t"cool info\"""", pyperclip.paste())
+        pyperclip.paste() | should.equal("""\"Some-Other-Name"\t"22"\t"some other info"
+"Yet-Another-Name"\t"14"\t"cool info\"""")
 
     def _shift_resizes_column_selection(self):
         pyperclip.copy("old clipboard contents")
@@ -177,11 +183,10 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         ActionChains(self.page.driver).key_down(
             Keys.CONTROL).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertEqual(
+        pyperclip.paste() | should.equal(
             """\"Some-Name"\t"6"
 "Some-Other-Name"\t"22"
-"Yet-Another-Name"\t"14\"""",
-            pyperclip.paste())
+"Yet-Another-Name"\t"14\"""")
 
     def _mouseup_outside_grid_still_makes_a_selection(self):
         pyperclip.copy("old clipboard contents")
@@ -200,18 +205,4 @@ class CopySelectedQueryResultsFeatureTest(BaseFeatureTest):
         ActionChains(self.page.driver).key_down(
             Keys.CONTROL).send_keys('c').key_up(Keys.CONTROL).perform()
 
-        self.assertIn('"cool info"', pyperclip.paste())
-
-    def after(self):
-        self.page.close_query_tool()
-        self.page.remove_server(self.server)
-
-        connection = test_utils.get_db_connection(
-            self.server['db'],
-            self.server['username'],
-            self.server['db_password'],
-            self.server['host'],
-            self.server['port'],
-            self.server['sslmode']
-        )
-        test_utils.drop_database(connection, "acceptance_test_db")
+        pyperclip.paste() | should.contain('"cool info"')

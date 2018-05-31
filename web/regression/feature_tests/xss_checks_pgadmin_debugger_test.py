@@ -6,27 +6,30 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
-from selenium.webdriver import ActionChains
+import pytest
+from grappa import should
 from selenium.common.exceptions import TimeoutException
-from regression.python_test_utils import test_utils
-from regression.feature_utils.base_feature_test import BaseFeatureTest
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from regression.feature_utils.base_feature_test import BaseFeatureTest
+from regression.python_test_utils import test_utils
 
 
-class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
-    """Tests to check if Debugger is vulnerable to XSS."""
+class TestCheckDebuggerForXss(BaseFeatureTest):
+    def test_check_debugger_for_xss(self, driver):
+        """
+        Tests to check if Debugger is vulnerable to XSS.
+        """
+        self.driver = driver
 
-    scenarios = [
-        ("Tests to check if Debugger is vulnerable to XSS", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         with test_utils.Database(self.server) as (connection, _):
             if connection.server_version < 90100:
-                self.skipTest(
+                pytest.skip(
                     "Functions tree node is not present in pgAdmin below "
                     "PG v9.1"
                 )
@@ -36,13 +39,11 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
             self.server, "postgres", "a_test_function"
         )
 
-    def runTest(self):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)
         self._function_node_expandable()
         self._debug_function()
 
-    def after(self):
         self.page.remove_server(self.server)
         test_utils.drop_debug_function(self.server, "postgres",
                                        "a_test_function")
@@ -80,7 +81,7 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
         # If debugger plugin is not found
         if is_error and is_error.text == "Debugger Error":
             self.page.click_modal('OK')
-            self.skipTest(
+            pytest.skip(
                 "Please make sure that debugger plugin is properly configured"
             )
         else:
@@ -106,11 +107,14 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
             source_code = self.page.find_by_xpath(
                 "//*[@id='messages']"
             ).get_attribute('innerHTML')
-            self._check_escaped_characters(
-                source_code,
-                'NOTICE:  &lt;img src="x" onerror="console.log(1)"&gt;',
-                'Debugger'
+
+            escaped_characters = \
+                'NOTICE:  &lt;img src="x" onerror="console.log(1)"&gt;'
+            source_code | should.contain(
+                escaped_characters,
+                msg="Debugger might be vulnerable to XSS "
             )
+
             self._close_debugger()
 
     def _close_debugger(self):
@@ -119,8 +123,3 @@ class CheckDebuggerForXssFeatureTest(BaseFeatureTest):
             self.page.find_by_xpath(
                 "//*[@id='dockerContainer']/div/div[3]/div/div[2]/div[1]")
         )
-
-    def _check_escaped_characters(self, source_code, string_to_find, source):
-        # For XSS we need to search against element's html code
-        assert source_code.find(string_to_find) != - \
-            1, "{0} might be vulnerable to XSS ".format(source)

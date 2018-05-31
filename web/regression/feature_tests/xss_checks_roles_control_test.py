@@ -6,21 +6,18 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+from grappa import should
 
-from selenium.webdriver import ActionChains
-from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
+from regression.python_test_utils import test_utils
 
 
-class CheckRoleMembershipControlFeatureTest(BaseFeatureTest):
-    """Tests to check role membership control for xss."""
+class TestCheckRoleMembershipControl(BaseFeatureTest):
+    def test_check_role_membership_control(self, driver):
+        self.driver = driver
 
-    scenarios = [
-        ("Tests to check if Role membership control is vulnerable to XSS",
-         dict())
-    ]
+        self.setUp()
 
-    def before(self):
         with test_utils.Database(self.server) as (connection, _):
             if connection.server_version < 90100:
                 self.skipTest(
@@ -32,13 +29,11 @@ class CheckRoleMembershipControlFeatureTest(BaseFeatureTest):
         test_utils.create_role(self.server, "postgres",
                                "<h1>test</h1>")
 
-    def runTest(self):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)
         self._role_node_expandable()
         self._check_role_membership_control()
 
-    def after(self):
         self.page.remove_server(self.server)
         test_utils.drop_role(self.server, "postgres",
                              "test_role")
@@ -59,17 +54,13 @@ class CheckRoleMembershipControlFeatureTest(BaseFeatureTest):
             "//div[contains(@class,'rolmembership')]"
         ).get_attribute('innerHTML')
 
-        self._check_escaped_characters(
-            source_code,
-            '&lt;h1&gt;test&lt;/h1&gt;',
-            'Role Membership Control'
+        escaped_characters = '&lt;h1&gt;test&lt;/h1&gt;'
+        source_code | should.contain(
+            escaped_characters,
+            msg="Role Membership Control might be vulnerable to XSS "
         )
+
         self.page.find_by_xpath(
             "//button[contains(@type, 'cancel') and "
             "contains(.,'Cancel')]"
         ).click()
-
-    def _check_escaped_characters(self, source_code, string_to_find, source):
-        # For XSS we need to search against element's html code
-        assert source_code.find(string_to_find) != - \
-            1, "{0} might be vulnerable to XSS ".format(source)

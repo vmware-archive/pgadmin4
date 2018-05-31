@@ -7,17 +7,19 @@
 #
 ##########################################################################
 
-import os
 import json
+import os
 import time
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver import ActionChains
-from regression.python_test_utils import test_utils
-from regression.feature_utils.base_feature_test import BaseFeatureTest
 
+from grappa import should
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from regression.feature_utils.base_feature_test import BaseFeatureTest
+from regression.python_test_utils import test_utils
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -31,17 +33,16 @@ except Exception as e:
     print(str(e))
 
 
-class PGDataypeFeatureTest(BaseFeatureTest):
-    """
-        This feature test will test the different Postgres
-        data-type output.
-    """
+class TestPGDataype(BaseFeatureTest):
+    def test_pg_datatype(self, driver):
+        """
+            This feature test will test the different Postgres
+            data-type output.
+        """
+        self.driver = driver
 
-    scenarios = [
-        ("Test checks for PG data-types output", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -76,6 +77,25 @@ class PGDataypeFeatureTest(BaseFeatureTest):
         # to add matching closing bracket by it self.
         self._update_preferences()
 
+        self.page.wait_for_spinner_to_disappear()
+        self.page.add_server(self.server)
+        self._schema_node_expandable()
+
+        # Check data types
+        self._check_datatype()
+        self.page.close_query_tool()
+
+        self.page.remove_server(self.server)
+        connection = test_utils.get_db_connection(
+            self.server['db'],
+            self.server['username'],
+            self.server['db_password'],
+            self.server['host'],
+            self.server['port'],
+            self.server['sslmode']
+        )
+        test_utils.drop_database(connection, "acceptance_test_db")
+
     def _update_preferences(self):
         self.page.find_by_id("mnu_file").click()
         self.page.find_by_id("mnu_preferences").click()
@@ -100,7 +120,7 @@ class PGDataypeFeatureTest(BaseFeatureTest):
             "contains(.,'Insert bracket pairs?')]"
         )
 
-        switch_btn = insert_bracket_pairs_control.\
+        switch_btn = insert_bracket_pairs_control. \
             find_element_by_class_name('bootstrap-switch')
 
         # check if switch is on then only toggle.
@@ -126,27 +146,6 @@ class PGDataypeFeatureTest(BaseFeatureTest):
         self.page.find_by_id("btn-flash").click()
         self._clear_query_tool()
 
-    def runTest(self):
-        self.page.wait_for_spinner_to_disappear()
-        self.page.add_server(self.server)
-        self._schema_node_expandable()
-
-        # Check data types
-        self._check_datatype()
-        self.page.close_query_tool()
-
-    def after(self):
-        self.page.remove_server(self.server)
-        connection = test_utils.get_db_connection(
-            self.server['db'],
-            self.server['username'],
-            self.server['db_password'],
-            self.server['host'],
-            self.server['port'],
-            self.server['sslmode']
-        )
-        test_utils.drop_database(connection, "acceptance_test_db")
-
     def _schema_node_expandable(self):
         self.page.toggle_open_tree_item(self.server['name'])
         self.page.toggle_open_tree_item('Databases')
@@ -158,7 +157,7 @@ class PGDataypeFeatureTest(BaseFeatureTest):
         self.page.open_query_tool()
         self._create_enum_type()
         for batch in config_data:
-            query = self.construct_select_query(batch)
+            query = self._construct_select_query(batch)
             self.page.fill_codemirror_area_with(query)
             self.page.find_by_id("btn-flash").click()
             wait = WebDriverWait(self.page.driver, 5)
@@ -179,35 +178,30 @@ class PGDataypeFeatureTest(BaseFeatureTest):
             cells = canvas.find_elements_by_css_selector('.slick-cell')
             # remove first element as it is row number.
             cells.pop(0)
-            for val, cell, datatype in zip(
-                    batch['output'], cells, batch['datatype']):
+            for val, cell, datatype in zip(batch['output'],
+                                           cells,
+                                           batch['datatype']):
                 expected_output = batch['output'][cnt - 2]
 
                 if not self._is_datatype_available_in_current_database(
-                        datatype):
+                   datatype):
                     cnt += 1
                     continue
 
                 if datatype in ('tstzrange', 'tstzrange[]'):
                     expected_output = expected_output.format(
                         **dict([('tz', self.timezone_hh_mm)]))
-                try:
-                    source_code = cell.text
-                    PGDataypeFeatureTest.check_result(
-                        datatype,
-                        source_code,
-                        expected_output
-                    )
 
-                    cnt += 1
-                except TimeoutException:
-                    assert False,\
-                        "for datatype {0}\n{1} does not match with {2}".format(
-                            datatype, val, expected_output
-                        )
+                source_code = cell.text
+                (lambda: TestPGDataype.check_result(
+                    datatype,
+                    source_code,
+                    expected_output
+                )) | should.does_not.raises(TimeoutException)
+
             self._clear_query_tool()
 
-    def construct_select_query(self, batch):
+    def _construct_select_query(self, batch):
         query = 'SELECT '
         first = True
         for datatype, inputdata in zip(batch['datatype'], batch['input']):
@@ -231,17 +225,18 @@ class PGDataypeFeatureTest(BaseFeatureTest):
 
     @staticmethod
     def check_result(datatype, source_code, string_to_find):
-        assert source_code == string_to_find,\
-            "for datatype {0}\n{1} does not match with {2}".format(
-                datatype, source_code, string_to_find
-            )
+        source_code | \
+            should.equal(
+                string_to_find,
+                msg="for datatype {0}\n{1} does not match with {2}".format(
+                    datatype, source_code, string_to_find))
 
     def _clear_query_tool(self):
         self.page.click_element(
             self.page.find_by_xpath("//*[@id='btn-clear-dropdown']")
         )
-        ActionChains(self.driver)\
-            .move_to_element(self.page.find_by_xpath("//*[@id='btn-clear']"))\
+        ActionChains(self.driver) \
+            .move_to_element(self.page.find_by_xpath("//*[@id='btn-clear']")) \
             .perform()
         self.page.click_element(
             self.page.find_by_xpath("//*[@id='btn-clear']")

@@ -6,12 +6,11 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
+import copy
 import json
 
 from grappa import should
 
-from pgadmin.utils.base_test_generator import BaseTestGenerator
 from regression.python_test_utils import test_utils as utils
 
 
@@ -29,7 +28,7 @@ class TestServersWithSSHTunnelAdd:
 
         url = "/browser/server/obj/{0}/".format(utils.SERVER_GROUP)
 
-        self.server = context_of_tests['server']
+        self.server = copy.deepcopy(context_of_tests['server'])
         self.tester = context_of_tests['test_client']
         self.server['use_ssh_tunnel'] = 1
         self.server['tunnel_host'] = '127.0.0.1'
@@ -61,7 +60,7 @@ class TestServersWithSSHTunnelAdd:
 
         url = "/browser/server/obj/{0}/".format(utils.SERVER_GROUP)
 
-        self.server = context_of_tests['server']
+        self.server = copy.deepcopy(context_of_tests['server'])
         self.tester = context_of_tests['test_client']
         self.server['use_ssh_tunnel'] = 1
         self.server['tunnel_host'] = '127.0.0.1'

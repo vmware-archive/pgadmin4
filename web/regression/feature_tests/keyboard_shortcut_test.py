@@ -8,28 +8,31 @@
 ##########################################################################
 
 from __future__ import print_function
-import time
+
 import sys
+import time
 
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
+from grappa import should
 from selenium.webdriver import ActionChains
-from regression.feature_utils.base_feature_test import BaseFeatureTest
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class KeyboardShortcutFeatureTest(BaseFeatureTest):
-    """
+class TestKeyboardShortcut(BaseFeatureTest):
+    def test_keyboard_shortcut(self, driver):
+        """
         This feature test will test the keyboard short is working
         properly.
-    """
+        """
 
-    scenarios = [
-        ("Test for keyboard shortcut", dict())
-    ]
+        self.driver = driver
 
-    def before(self):
+        self.setUp()
+
         self.new_shortcuts = {
             'mnu_file': {
                 'shortcut': [Keys.ALT, Keys.SHIFT, 'i'],
@@ -43,18 +46,19 @@ class KeyboardShortcutFeatureTest(BaseFeatureTest):
 
         self.wait = WebDriverWait(self.page.driver, 10)
 
-    def runTest(self):
         self._update_preferences()
+
         # On updating keyboard shortcuts, preference cache is updated.
         # There is no UI event through which we can identify that the cache
         # is updated, So, added time.sleep()
         time.sleep(1)
+
         self._check_shortcuts()
 
     def _check_shortcuts(self):
         action = ActionChains(self.driver)
-        for s in self.new_shortcuts:
-            key_combo = self.new_shortcuts[s]['shortcut']
+        for shortcut in self.new_shortcuts:
+            key_combo = self.new_shortcuts[shortcut]['shortcut']
             action.key_down(
                 key_combo[0]
             ).key_down(
@@ -67,20 +71,25 @@ class KeyboardShortcutFeatureTest(BaseFeatureTest):
                 key_combo[1]
             ).perform()
 
-            print("Executing shortcut: " + self.new_shortcuts[s]['locator'] +
-                  "...", file=sys.stderr, end="")
+            print(
+                "Executing shortcut: " +
+                self.new_shortcuts[shortcut]['locator'] +
+                "...",
+                file=sys.stderr, end=""
+            )
 
             self.wait.until(
                 EC.presence_of_element_located(
                     (By.XPATH, "//li[contains(@id, " +
-                     s +
+                     shortcut +
                      ") and contains(@class, 'open')]")
                 )
             )
 
-            is_open = 'open' in self.page.find_by_id(s).get_attribute('class')
-
-            assert is_open is True, "Keyboard shortcut change is unsuccessful."
+            self.page.find_by_id(shortcut).get_attribute('class') | \
+                should.contain(
+                    'open',
+                    msg='Keyboard shortcut change is unsuccessful.')
 
             print("OK", file=sys.stderr)
 

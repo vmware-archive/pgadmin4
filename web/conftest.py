@@ -6,17 +6,39 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
+
+import atexit
+import logging
 import os
+import signal
 import sys
 
 import pytest
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+logger = logging.getLogger(__name__)
+file_name = os.path.basename(__file__)
+
+if sys.version_info < (2, 7):
+    pass
+else:
+    pass
+
+if sys.version_info[0] >= 3:
+    import builtins
+else:
+    import __builtin__ as builtins
+
+# Ensure the global server mode is set.
+builtins.SERVER_MODE = None
 
 logger = logging.getLogger(__name__)
 file_name = os.path.basename(__file__)
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-root = os.path.dirname(CURRENT_PATH)
+root = os.path.dirname(CURRENT_PATH) + os.path.sep + 'web'
 
 if sys.path[0] != root:
     sys.path.insert(0, root)
@@ -33,6 +55,13 @@ from pgadmin.browser.server_groups.servers.databases.tests.utils import \
     client_connect_database, client_disconnect_database
 from pgadmin.utils import server_utils
 from regression import test_setup
+
+from regression.feature_utils.app_starter import AppStarter
+
+if config.SERVER_MODE is True:
+    config.SECURITY_RECOVERABLE = True
+    config.SECURITY_CHANGEABLE = True
+    config.SECURITY_POST_CHANGE_VIEW = 'browser.change_password'
 
 from regression.feature_utils.app_starter import AppStarter
 
@@ -74,6 +103,11 @@ from regression.python_test_utils import test_utils
 
 config.SETTINGS_SCHEMA_VERSION = SCHEMA_VERSION
 
+# Override some other defaults
+from logging import WARNING
+
+config.CONSOLE_LOG_LEVEL = WARNING
+
 # Create the app
 app = create_app()
 app.config['WTF_CSRF_ENABLED'] = False
@@ -87,13 +121,24 @@ handle_cleanup = None
 server_info = test_utils.get_config_data()
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # execute all other hooks to obtain the report object
+    outcome = yield
+    rep = outcome.get_result()
+
+    # set a report attribute for each phase of a call, which can
+    # be "setup", "call", "teardown"
+
+    setattr(item, "rep_" + rep.when, rep)
+
+
 @pytest.fixture(scope="session", autouse=True)
-def database_server():
+def database_server(request):
     server_information = test_utils.create_parent_server_node(server_info[0])
+    request.addfinalizer(lambda: test_utils.delete_test_server(test_client))
 
     yield server_information
-
-    test_utils.delete_test_server(test_client)
 
 
 @pytest.fixture(scope='session')

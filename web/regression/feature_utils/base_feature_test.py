@@ -15,13 +15,34 @@ from datetime import datetime
 
 from copy import deepcopy
 
+import pytest
+
 import config as app_config
 from pgadmin.utils.base_test_generator import BaseTestGenerator
 from regression.feature_utils.pgadmin_page import PgadminPage
+from regression.feature_utils.app_starter import AppStarter
+from regression.python_test_utils import test_utils
+
+import atexit
 
 
 class BaseFeatureTest(BaseTestGenerator):
     CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+
+    @pytest.fixture(autouse=True)
+    def something(self, request):
+        yield
+        # request.node is an "item" because we use the default
+        # "function" scope
+        if request.node.rep_setup.failed:
+            self._screenshot()
+        elif request.node.rep_setup.passed:
+            if request.node.rep_call.failed:
+                self._screenshot()
+
+    def startApp(self):
+        self.app_starter = AppStarter(self.driver, app_config)
+        self.app_starter.start_app()
 
     def setUp(self):
         self.server = deepcopy(self.server)
@@ -44,9 +65,6 @@ class BaseFeatureTest(BaseTestGenerator):
         except Exception:
             self._screenshot()
             raise
-
-    def runTest(self):
-        pass
 
     def before(self):
         pass

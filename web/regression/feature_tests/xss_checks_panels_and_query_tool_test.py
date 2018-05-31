@@ -6,31 +6,30 @@
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
+from grappa import should
 from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class CheckForXssFeatureTest(BaseFeatureTest):
-    """
-    Tests to check if pgAdmin4 is vulnerable to XSS.
+class TestCheckForXss(BaseFeatureTest):
+    def test_check_for_xss(self, driver):
+        """
+        Tests to check if pgAdmin4 is vulnerable to XSS.
 
-    Here we will check html source code for escaped characters if we
-    found them in the code then we are not vulnerable otherwise we might.
+        Here we will check html source code for escaped characters if we
+        found them in the code then we are not vulnerable otherwise we might.
 
-    We will cover,
-        1) Browser Tree (aciTree)
-        2) Properties Tab (BackFrom)
-        3) Dependents Tab (BackGrid)
-        4) SQL Tab (Code Mirror)
-        5) Query Tool (SlickGrid)
-    """
+        We will cover,
+            1) Browser Tree (aciTree)
+            2) Properties Tab (BackFrom)
+            3) Dependents Tab (BackGrid)
+            4) SQL Tab (Code Mirror)
+            5) Query Tool (SlickGrid)
+        """
+        self.driver = driver
 
-    scenarios = [
-        ("Test XSS check for panels and query tool", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -52,7 +51,6 @@ class CheckForXssFeatureTest(BaseFeatureTest):
             "unique", "<h1 onmouseover='console.log(2);'>Y"
         )
 
-    def runTest(self):
         self.page.wait_for_spinner_to_disappear()
         self.page.add_server(self.server)
         self._tables_node_expandable()
@@ -65,7 +63,6 @@ class CheckForXssFeatureTest(BaseFeatureTest):
         self._check_xss_in_query_tool()
         self.page.close_query_tool()
 
-    def after(self):
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],
@@ -165,5 +162,6 @@ class CheckForXssFeatureTest(BaseFeatureTest):
 
     def _check_escaped_characters(self, source_code, string_to_find, source):
         # For XSS we need to search against element's html code
-        assert source_code.find(string_to_find) != - \
-            1, "{0} might be vulnerable to XSS ".format(source)
+        source_code | \
+            should.contain(string_to_find,
+                           msg="{0} might be vulnerable to XSS".format(source))

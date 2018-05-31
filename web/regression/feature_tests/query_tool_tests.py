@@ -8,12 +8,12 @@
 ##########################################################################
 
 from __future__ import print_function
-import time
 import sys
 
 from selenium.common.exceptions import StaleElementReferenceException
 
 import config
+from grappa import should
 from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -22,16 +22,15 @@ from regression.python_test_utils import test_utils
 from regression.feature_utils.base_feature_test import BaseFeatureTest
 
 
-class QueryToolFeatureTest(BaseFeatureTest):
-    """
-        This feature test will test the different query tool features.
-    """
+class TestQueryTool(BaseFeatureTest):
+    def test_query_tool(self, driver):
+        """
+            This feature test will test the different query tool features.
+        """
+        self.driver = driver
 
-    scenarios = [
-        ("Query tool feature test", dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -48,7 +47,6 @@ class QueryToolFeatureTest(BaseFeatureTest):
         self.page.open_query_tool()
         self._reset_options()
 
-    def runTest(self):
         # on demand result set on scrolling.
         print("\nOn demand query result... ",
               file=sys.stderr, end="")
@@ -104,7 +102,6 @@ class QueryToolFeatureTest(BaseFeatureTest):
         self._query_tool_notify_statements()
         self._clear_query_tool()
 
-    def after(self):
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
             self.server['db'],
@@ -379,10 +376,11 @@ SELECT relname FROM pg_class
             "//div[contains(@class, 'slick-cell') and "
             "contains(text(), '{}')]".format(table_name))
 
-        assert len(el) == 0, "Table '{}' created with auto commit disabled " \
-                             "and without any explicit commit.".format(
-            table_name
-        )
+        len(el) | \
+            should.have.length.of(0,
+                                  msg="Table '{}' created with auto commit "
+                                      "disabled and without any explicit "
+                                      "commit.".format(table_name))
 
     def _query_tool_auto_commit_enabled(self):
 
@@ -465,8 +463,10 @@ SELECT relname FROM pg_class
             "//div[contains(@class, 'slick-cell') and "
             "contains(text(), '{}')]".format(table_name))
 
-        assert len(el) != 0, "Table '{}' is not created with auto " \
-                             "commit enabled.".format(table_name)
+        len(el) | should.not_have.length.of(0,
+                                            msg="Table '{}' is not created "
+                                                "with auto commit "
+                                                "enabled.".format(table_name))
 
     def _query_tool_auto_rollback_enabled(self):
         table_name = 'query_tool_auto_rollback_enabled_table'
@@ -563,8 +563,10 @@ SELECT relname FROM pg_class
             "//div[contains(@class, 'slick-cell') and "
             "contains(text(), '{}')]".format(table_name))
 
-        assert len(el) == 0, "Table '{}' created even after ROLLBACK due to " \
-                             "sql error.".format(table_name)
+        len(el) | should.have.length.of(0,
+                                        msg="Table '{}' created even after "
+                                            "ROLLBACK due to sql "
+                                            "error.".format(table_name))
 
     def _query_tool_cancel_query(self):
         query = """-- 1. END any open transaction.

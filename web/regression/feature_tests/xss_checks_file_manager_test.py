@@ -8,24 +8,23 @@
 ##########################################################################
 
 import os
-import time
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
+
+from grappa import should
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from regression.python_test_utils import test_utils
+from selenium.webdriver.support.ui import WebDriverWait
+
 from regression.feature_utils.base_feature_test import BaseFeatureTest
+from regression.python_test_utils import test_utils
 
 
-class CheckFileManagerFeatureTest(BaseFeatureTest):
-    """Tests to check file manager for XSS."""
+class TestCheckFileManager(BaseFeatureTest):
+    def test_check_file_manager(self, driver):
+        self.driver = driver
 
-    scenarios = [
-        ("Tests to check if File manager is vulnerable to XSS",
-         dict())
-    ]
+        self.setUp()
 
-    def before(self):
         connection = test_utils.get_db_connection(
             self.server['db'],
             self.server['username'],
@@ -42,7 +41,11 @@ class CheckFileManagerFeatureTest(BaseFeatureTest):
         if os.path.isfile(self.XSS_FILE):
             os.remove(self.XSS_FILE)
 
-    def after(self):
+        self._navigate_to_query_tool()
+        self.page.fill_codemirror_area_with("SELECT 1;")
+        self._create_new_file()
+        self._open_file_manager_and_check_xss_file()
+
         self.page.close_query_tool('sql', False)
         self.page.remove_server(self.server)
         connection = test_utils.get_db_connection(
@@ -53,12 +56,6 @@ class CheckFileManagerFeatureTest(BaseFeatureTest):
             self.server['port']
         )
         test_utils.drop_database(connection, "acceptance_test_db")
-
-    def runTest(self):
-        self._navigate_to_query_tool()
-        self.page.fill_codemirror_area_with("SELECT 1;")
-        self._create_new_file()
-        self._open_file_manager_and_check_xss_file()
 
     def _navigate_to_query_tool(self):
         self.page.toggle_open_tree_item(self.server['name'])
@@ -113,14 +110,9 @@ class CheckFileManagerFeatureTest(BaseFeatureTest):
 
         self.page.click_modal('Cancel')
         self.page.wait_for_query_tool_loading_indicator_to_disappear()
-        self._check_escaped_characters(
-            contents,
-            '&lt;img src=x onmouseover=alert("1")&gt;.sql',
-            'File manager'
-        )
 
-    def _check_escaped_characters(self, source_code, string_to_find, source):
-        # For XSS we need to search against element's html code
-        assert source_code.find(
-            string_to_find
-        ) != -1, "{0} might be vulnerable to XSS ".format(source)
+        escaped_characters = '&lt;img src=x onmouseover=alert("1")&gt;.sql'
+        contents | should.contain(
+            escaped_characters,
+            msg="File Manager might be vulnerable to XSS "
+        )
