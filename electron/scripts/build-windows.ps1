@@ -1,4 +1,4 @@
-function New-TemporaryDirectory {
+﻿function New-TemporaryDirectory {
     $parent = [System.IO.Path]::GetTempPath()
     $name = [System.IO.Path]::GetRandomFileName()
     New-Item -ItemType Directory -Path (Join-Path $parent $name)
@@ -7,28 +7,29 @@ function New-TemporaryDirectory {
 $dir  = pwd
 $full_folder_tempdir = New-TemporaryDirectory
 $tempdir = "P:"
+subst $tempdir /D
 subst $tempdir $full_folder_tempdir
-cd $tempdir
+cd P:\
 
 echo "## Copying Electron Folder to the temporary directory..."
 cp -Recurse -force $dir\electron .
 
-pushd .\electron > $null
+pushd .\electron
     echo "## Copying pgAdmin folder to the temporary directory..."
-    rm -erroraction 'silentlycontinue' web
+    Remove-Item -Recurse -ErrorAction Ignore web
     cp -Recurse -force $dir\web .
 
     echo "## Creating Virtual Environment..."
-    rm -erroraction 'silentlycontinue' venv
-    mkdir -p venv > $null
-    virtualenv.exe venv
+    Remove-Item -Recurse -ErrorAction Ignore venv
+    mkdir venv
+	python -m virtualenv venv
+    # virtualenv.exe venv
     . .\venv\Scripts\activate
     python -m pip install -r $dir\requirements.txt
 
-
     echo "## Compiling web folder"
     pushd web
-     rm -erroraction 'silentlycontinue' node_modules
+	 Remove-Item -Recurse -ErrorAction Ignore node_modules
      yarn bundle-app-js
     popd
     yarn install
