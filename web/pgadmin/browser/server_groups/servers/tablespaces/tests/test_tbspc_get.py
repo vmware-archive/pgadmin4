@@ -72,7 +72,7 @@ class TestTablespaceGet:
             should.be.none
         json_response | should.have.key('oid')
         json_response | should.have.key('spclocation') > \
-            should.be.equal.to(self.server['tablespace_path'])
+            should.be.equal.to(self.server['tablespace_path'].rstrip('/\\'))
         json_response | should.have.key('acl') > \
             should.be.none
         json_response | should.have.key('spcuser') > \

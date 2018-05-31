@@ -145,35 +145,34 @@ Python Tests:
      run 'cd web/regression'
 
 - Execute the test framework for all nodes
-     run 'python runtests.py --pkg all' or just:
-         'python runtests.py'
+     run 'python -m pytest -q pgadmin regression/feature_tests'
 
 - Execute test framework for entire package
 
      Example 1) Run test framework for 'browser' package
-     run 'python runtests.py --pkg browser'
+     run 'python -m pytest -q pgadmin/browser'
 
      Example 2) Run test framework for 'database' package
-     run 'python runtests.py --pkg browser.server_groups.servers.databases'
+     run 'python -m pytest -q pgadmin/browser/server_groups/servers/databases'
 
      Example 3) Run feature tests
-     run 'python runtests.py --pkg feature_tests
+     run 'python -m pytest -q regression/feature_tests'
 
 - Execute test framework for single node at a time
 
      Example 1) Run test framework for 'browser' node
-     run 'python runtests.py --pkg browser.server_groups.tests'
+     run 'python -m pytest -q pgadmin --ignore pgadmin/browser/server_groups/tests'
 
      Example 2) Run test framework for 'database' node
-     run 'python runtests.py --pkg browser.server_groups.servers.databases.tests'
+     run 'python -m pytest -q pgadmin/browser/server_groups/servers/databases/tests'
 
 - Exclude a package and its subpackages when running tests:
 
     Example: exclude feature tests but run all others:
-    run 'python runtests.py --exclude feature_tests'
+    run 'python -m pytest -q pgadmin'
 
     Example: exclude multiple packages:
-    run 'python runtests.py --exclude browser.server_groups.servers.databases,browser.server_groups.servers.tablespaces'
+    run 'python -m pytest -q pgadmin --ignore pgadmin/browser/server_groups/servers/databases --ignore pgadmin/browser/server_groups/servers/tablespaces'
 
 Javascript Tests:
 

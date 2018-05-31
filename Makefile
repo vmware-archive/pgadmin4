@@ -19,29 +19,32 @@ all: docs pip src runtime
 appbundle: docs
 	./pkg/mac/build.sh
 
-install-node:
-	cd web && yarn install
-
 bundle:
 	cd web && yarn run bundle
 
 bundle-dev:
 	cd web && yarn run bundle:dev
 
+install-node:
+	cd web && yarn install
+
 linter:
 	cd web && yarn run linter
 
-check: install-node bundle linter
-	cd web && pycodestyle --config=.pycodestyle . && yarn run karma start --single-run && python regression/runtests.py
+check: install-node bundle check-pep8 check-js check-python check-feature
 
 check-pep8:
 	cd web && pycodestyle --config=.pycodestyle .
 
 check-python:
-	cd web && python regression/runtests.py --exclude feature_tests
+	cd web && python -m pytest --tb=short -q \
+	--json=regression/test_result.json --log-file-level=DEBUG \
+	--log-file=regression/regression.log pgadmin
 
 check-feature: install-node bundle
-	cd web && python regression/runtests.py --pkg feature_tests
+	cd web && python -m pytest --tb=short -q \
+	--json=regression/test_result.json --log-file-level=DEBUG \
+	--log-file=regression/regression.log regression/feature_tests
 
 check-js: install-node linter
 	cd web && yarn run karma start --single-run
