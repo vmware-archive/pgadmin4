@@ -215,6 +215,8 @@ app.on('activate', () => {
 });
 
 function createPyProc() {
+  copyPythonDll();
+
   let useServerMode = false;
   let sourceFolder = '..';
   if (process.env.ENV === 'DEV') {
@@ -265,6 +267,18 @@ function exitPyProc() {
   } else {
     app.exit();
   }
+}
+
+function copyPythonDll() {
+   if (process.platform !== 'win32') {
+    return
+  }
+
+  const fs = require('fs');
+  let src = path.join(__dirname, '..', 'assets', 'dll', 'python27.dll');
+  let dest = path.join('Windows', 'System32', 'python27.dll');
+
+  fs.copyFileSync(src, path.resolve(dest));
 }
 
 app.on('ready', createPyProc);
