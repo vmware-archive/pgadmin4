@@ -252,7 +252,7 @@ function createPyProc() {
 
 function calculatePythonExecutablePath() {
   if (process.platform === 'win32') {
-    return path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe');
+    return path.join(__dirname, '..', 'venv', 'python.exe');
   }
   return path.join(__dirname, '..', 'venv', 'bin', 'python');
 }
