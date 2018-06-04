@@ -215,8 +215,6 @@ app.on('activate', () => {
 });
 
 function createPyProc() {
-  copyPythonDll();
-
   let useServerMode = false;
   let sourceFolder = '..';
   if (process.env.ENV === 'DEV' || process.env.ENV === 'TEST') {
@@ -226,12 +224,12 @@ function createPyProc() {
   const pythonPath = calculatePythonExecutablePath();
   const scriptPath = path.join(__dirname, sourceFolder, 'web', 'pgAdmin4.py');
   electronLogger.info('info: Spawning...');
-  let env = Object.create(process. env);
+  const env = Object.create(process.env);
   env.PGADMIN_PORT = pythonApplicationPort;
   env.PGADMIN_KEY = secret;
   env.SERVER_MODE = useServerMode;
 
-  pyProc = childProcess.spawn(pythonPath, [scriptPath], { env: env });
+  pyProc = childProcess.spawn(pythonPath, [scriptPath], { env });
 
   waitForPythonServerToBeAvailable.waitForPythonServerToBeAvailable(pythonApplicationUrl, () => {
     electronLogger.debug('debug: Python server is Up, going to start the pgadmin window');
@@ -267,18 +265,6 @@ function exitPyProc() {
   } else {
     app.exit();
   }
-}
-
-function copyPythonDll() {
-   if (process.platform !== 'win32') {
-    return
-  }
-
-  const fs = require('fs');
-  let src = path.join(__dirname, '..', 'assets', 'dll', 'python27.dll');
-  let dest = path.join('Windows', 'System32', 'python27.dll');
-
-  fs.copyFileSync(src, path.resolve(dest));
 }
 
 app.on('ready', createPyProc);

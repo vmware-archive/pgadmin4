@@ -1,4 +1,4 @@
-﻿function New-TemporaryDirectory {
+﻿﻿function New-TemporaryDirectory {
     $parent = [System.IO.Path]::GetTempPath()
     $name = [System.IO.Path]::GetRandomFileName()
     New-Item -ItemType Directory -Path (Join-Path $parent $name)
@@ -23,6 +23,11 @@ pushd .\electron
     Remove-Item -Recurse -ErrorAction Ignore venv
     mkdir venv
 	python -m virtualenv venv
+	cp venv\Scripts\python.exe venv\
+	cp venv\Scripts\pythonw.exe venv\
+	cp C:\Windows\System32\python27.dll venv\
+	cp -Recurse -force C:\Python27\DLLs venv\
+	cp -Recurse -force C:\Python27\Lib\* venv\Lib\
     # virtualenv.exe venv
     . .\venv\Scripts\activate
     python -m pip install -r $dir\requirements.txt
