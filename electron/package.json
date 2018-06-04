@@ -18,7 +18,7 @@
     "lint": "eslint src test --color",
     "copy-folder:nix": "cp -r ../web web && find web | grep .pyc$ | xargs -I '{}' rm '{}'",
     "build:nix": "yarn copy-folder:nix && yarn bundle-app-js",
-    "test": "yarn lint && yarn mocha"
+    "test": "yarn lint && cross-env ENV=TEST yarn mocha"
   },
   "keywords": [
     "pgadmin",

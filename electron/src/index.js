@@ -219,7 +219,7 @@ function createPyProc() {
 
   let useServerMode = false;
   let sourceFolder = '..';
-  if (process.env.ENV === 'DEV') {
+  if (process.env.ENV === 'DEV' || process.env.ENV === 'TEST') {
     sourceFolder = path.join('..', '..');
     useServerMode = true;
   }

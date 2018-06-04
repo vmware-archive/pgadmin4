@@ -27,6 +27,7 @@ describe('pgAdmin4', () => {
     if (app && app.isRunning()) {
       return app.stop();
     }
+    return undefined;
   });
 
   it('launches pgadmin4 with a loading page', () => {
