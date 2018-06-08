@@ -15,11 +15,11 @@
     $ venv/bin/pip install -r ../requirements.txt
     ```
 
-### Linux
+### Linux (Ubuntu/Debian)
 1. `cd` into the root directory of the project.
 1. Execute the `./electron/scripts/build-linux` script in the corresponding docker image to compile utilities (python, javascript) to be bundled with the application.
    ```
-   $ docker run -v $PWD:$PWD -w $PWD --rm -t python:3.6 ./electron/scripts/build-linux.sh
+   $ docker run -v $PWD:$PWD -w $PWD --rm -t python:3.6 ./pkg/build-linux.sh
    ```
 
    The linux distributable will be found in the `out/make` directory of the previous electron folder.
@@ -46,11 +46,10 @@
     $ git clone https://github.com/greenplum-db/pgadmin4.git
     $ brew install node@8
     $ brew install yarn --without-node
-    $ git checkout electron
     ```
 1. Compile the application using the following command
 ```bash
-$ ./electron/scripts/build-darwin.sh
+$ ./pkg/build-darwin.sh
 ```
 
 ### Windows
@@ -62,4 +61,4 @@ $ ./electron/scripts/build-darwin.sh
 
 #### Installation steps
 
-Open powershell and run the script in `.\electron\scripts\build-windows.sh`
+Open powershell and run the script in `.\pkg\build-windows.ps1`
