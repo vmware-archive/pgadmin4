@@ -28,11 +28,22 @@
 
 #### Pre requirements
 * [HomeBrew](https://brew.sh/)
+* [Python 3.6](#install-the-pre-requirements-using-homebrew)
+* [sqlite3](#install-the-pre-requirements-using-homebrew)
+* [Node 8](#install-the-pre-requirements-using-homebrew)
+* [Yarn](#install-the-pre-requirements-using-homebrew) (Latest versions of yarn are packaged with node10, be sure that node 10 is not installed before starting)
+* [git](#install-the-pre-requirements-using-homebrew)
 
 #### Steps
+1. Compile the application using the following command
+```bash
+$ ./pkg/build-darwin.sh
+```
+
+#### Install the pre requirements using HomeBrew
 1. Install git
-`brew install git`
-1. Install python environment
+    `$ brew install git`
+1. Install python 3.6 (Optional if Python 3.6 is already installed)
     ```bash
     $ brew install pyenv sqlite3
     $ pyenv init
@@ -42,15 +53,12 @@
     $ pyenv install 3.6.5
     $ pyenv virtualenv 3.6.5 python36
     $ pyenv activate python36
-    $ mkdir workspace && cd workspace
-    $ git clone https://github.com/greenplum-db/pgadmin4.git
+    ```
+1. Install yarn and node
+    ```bash
     $ brew install node@8
     $ brew install yarn --without-node
     ```
-1. Compile the application using the following command
-```bash
-$ ./pkg/build-darwin.sh
-```
 
 ### Windows
 

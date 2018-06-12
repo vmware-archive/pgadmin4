@@ -37,7 +37,7 @@ pushd ${tmp_dir}/electron > /dev/null
   virtualenv --always-copy ./venv
 
   # Hack: Copies all python installation files to the virtual environment
-  # This was done becuse virtualenv does not copy all of the files
+  # This was done because virtualenv does not copy all of the files
   # Looks like it assumes that they are not needed or that they should be installed in the system
   echo "  ## Copy all python libraries to the newly created virtual environment"
   python_libraries_path=`dirname $(python -c "import logging;print(logging.__file__)")`/../

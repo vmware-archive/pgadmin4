@@ -40,9 +40,18 @@ pushd ${tmp_dir}/electron > /dev/null
 
   echo "## Creating Virtual Environment..."
   rm -rf venv; mkdir -p venv
-  python -m venv --copies ./venv
+  pip install virtualenv
+  virtualenv --always-copy ./venv
+
+  # Hack: Copies all python installation files to the virtual environment
+  # This was done because virtualenv does not copy all of the files
+  # Looks like it assumes that they are not needed or that they should be installed in the system
+  echo "  ## Copy all python libraries to the newly created virtual environment"
+  python_libraries_path=`dirname $(python -c "import logging;print(logging.__file__)")`/../
+  cp -r ${python_libraries_path}* venv/lib/python3.6/
+
   source ./venv/bin/activate
-  pip install -r ${dir}/requirements.txt
+  pip install --no-cache-dir --no-binary psycopg2 -r ${dir}/requirements.txt
 
   echo "## Building the Javascript of the application..."
   pushd web > /dev/null
